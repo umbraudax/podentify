@@ -40,8 +40,8 @@ export function useSubscription() {
         .from('stripe_user_subscriptions')
         .select('*')
         .limit(1);
-        .select('*')
-        .maybeSingle();
+
+      if (error) {
         // If the view doesn't exist, set subscription to null without error
         if (error.code === '42P01') {
           setSubscription(null);
@@ -49,7 +49,7 @@ export function useSubscription() {
           console.error('Error fetching subscription:', error.message);
           setSubscription(null);
         }
-        throw fetchError;
+        throw error;
       }
 
       setSubscription(data?.[0] || null);
