@@ -1,12 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mic, Menu, X } from 'lucide-react';
+import { Mic, Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/AuthModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +43,15 @@ export default function Header() {
       element.scrollIntoView({ behavior: 'smooth' });
     }
     setIsMobileMenuOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const openAuthModal = (mode: 'signin' | 'signup') => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
   };
 
   return (
@@ -65,17 +87,49 @@ export default function Header() {
 
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
-                className="text-gray-700 hover:text-blue-600 font-medium"
-              >
-                Sign In
-              </Button>
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-              >
-                Sign Up Free
-              </Button>
+              {loading ? (
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+              ) : user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-gray-700 font-medium">
+                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-700 hover:text-blue-600 font-medium"
+                    onClick={() => openAuthModal('signin')}
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    onClick={() => openAuthModal('signup')}
+                  >
+                    Sign Up Free
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -109,24 +163,56 @@ export default function Header() {
                 </button>
               ))}
               <div className="pt-4 border-t border-gray-200 space-y-3">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start text-gray-700 hover:text-blue-600 font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign In
-                </Button>
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign Up Free
-                </Button>
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 text-sm text-gray-600">
+                      {user.user_metadata?.full_name || user.email}
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-gray-700 hover:text-blue-600 font-medium"
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-gray-700 hover:text-blue-600 font-medium"
+                      onClick={() => {
+                        openAuthModal('signin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                      onClick={() => {
+                        openAuthModal('signup');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign Up Free
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode={authMode}
+      />
     </>
   );
 }

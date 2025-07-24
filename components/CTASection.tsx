@@ -2,10 +2,26 @@
 
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/AuthModal';
 
 export default function CTASection() {
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleGetStarted = () => {
+    if (user) {
+      // Redirect to dashboard or upload page
+      console.log('Redirect to dashboard');
+    } else {
+      setAuthModalOpen(true);
+    }
+  };
+
   return (
-    <section className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+    <>
+      <section className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
@@ -58,8 +74,9 @@ export default function CTASection() {
             <Button 
               size="lg" 
               className="bg-white text-blue-600 hover:bg-gray-100 px-10 py-4 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1 group"
+              onClick={handleGetStarted}
             >
-              Get Started for Free
+              {user ? 'Go to Dashboard' : 'Get Started for Free'}
               <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
             
@@ -87,6 +104,13 @@ export default function CTASection() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode="signup"
+      />
+    </>
   );
 }

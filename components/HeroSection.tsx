@@ -3,17 +3,31 @@
 import { useState, useEffect } from 'react';
 import { Play, Upload, Sparkles, FileText, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/AuthModal';
 
 export default function HeroSection() {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsAnimating(true), 1000);
     return () => clearTimeout(timer);
   }, []);
 
+  const handleGetStarted = () => {
+    if (user) {
+      // Redirect to dashboard or upload page
+      console.log('Redirect to dashboard');
+    } else {
+      setAuthModalOpen(true);
+    }
+  };
+
   return (
-    <section className="hero-gradient min-h-screen flex items-center justify-center px-4 py-20 pt-32">
+    <>
+      <section className="hero-gradient min-h-screen flex items-center justify-center px-4 py-20 pt-32">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}
@@ -40,8 +54,9 @@ export default function HeroSection() {
               <Button 
                 size="lg" 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                onClick={handleGetStarted}
               >
-                Get Started for Free
+                {user ? 'Go to Dashboard' : 'Get Started for Free'}
               </Button>
               <Button 
                 variant="outline" 
@@ -126,6 +141,13 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode="signup"
+      />
+    </>
   );
 }
