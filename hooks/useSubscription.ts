@@ -39,9 +39,8 @@ export function useSubscription() {
       const { data, error } = await supabase
         .from('stripe_user_subscriptions')
         .select('*')
-        .limit(1);
-
-      if (error) {
+        .limit(1)
+        .maybeSingle();
         // If the view doesn't exist, set subscription to null without error
         if (error.code === '42P01') {
           setSubscription(null);
