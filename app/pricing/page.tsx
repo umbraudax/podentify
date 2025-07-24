@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { stripeProducts } from '@/src/stripe-config';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -24,11 +25,18 @@ export default function PricingPage() {
     setLoading(priceId);
 
     try {
+      // Get the current session to ensure we have a valid token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Please sign in to continue');
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/stripe-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           price_id: priceId,
@@ -37,6 +45,11 @@ export default function PricingPage() {
           cancel_url: `${window.location.origin}/pricing`,
         }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
 
@@ -49,7 +62,7 @@ export default function PricingPage() {
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout process. Please try again.');
+      alert(`Failed to start checkout process: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setLoading(null);
     }

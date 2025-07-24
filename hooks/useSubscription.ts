@@ -34,18 +34,25 @@ export function useSubscription() {
   const fetchSubscription = async () => {
     try {
       setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
+      
+      // Check if the view exists first
+      const { data, error } = await supabase
         .from('stripe_user_subscriptions')
         .select('*')
+        .limit(1);
+        .select('*')
         .maybeSingle();
-
-      if (fetchError) {
+        // If the view doesn't exist, set subscription to null without error
+        if (error.code === '42P01') {
+          setSubscription(null);
+        } else {
+          console.error('Error fetching subscription:', error.message);
+          setSubscription(null);
+        }
         throw fetchError;
       }
 
-      setSubscription(data);
+      setSubscription(data?.[0] || null);
     } catch (err) {
       console.error('Error fetching subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
