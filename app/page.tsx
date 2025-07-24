@@ -4,6 +4,7 @@ import ProblemSolutionSection from '@/components/ProblemSolutionSection';
 import ShowNotesFeature from '@/components/ShowNotesFeature';
 import SocialSnippetsFeature from '@/components/SocialSnippetsFeature';
 import HowItWorksSection from '@/components/HowItWorksSection';
+import PricingSection from '@/components/PricingSection';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
 
@@ -16,6 +17,7 @@ export default function Home() {
       <ShowNotesFeature />
       <SocialSnippetsFeature />
       <HowItWorksSection />
+      <PricingSection />
       <CTASection />
       <Footer />
     </main>
