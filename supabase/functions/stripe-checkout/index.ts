@@ -45,6 +45,22 @@ Deno.serve(async (req) => {
 
     const { price_id, success_url, cancel_url, mode } = await req.json();
 
+    // Get user from Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return corsResponse({ error: 'Authorization header required' }, 401);
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const {
+      data: { user },
+      error: getUserError,
+    } = await supabase.auth.getUser(token);
+
+    if (getUserError || !user) {
+      return corsResponse({ error: 'Invalid authorization token' }, 401);
+    }
+
     const error = validateParameters(
       { price_id, success_url, cancel_url, mode },
       {
@@ -57,21 +73,6 @@ Deno.serve(async (req) => {
 
     if (error) {
       return corsResponse({ error }, 400);
-    }
-
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const {
-      data: { user },
-      error: getUserError,
-    } = await supabase.auth.getUser(token);
-
-    if (getUserError) {
-      return corsResponse({ error: 'Failed to authenticate user' }, 401);
-    }
-
-    if (!user) {
-      return corsResponse({ error: 'User not found' }, 404);
     }
 
     const { data: customer, error: getCustomerError } = await supabase

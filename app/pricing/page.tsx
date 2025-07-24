@@ -36,13 +36,14 @@ export default function PricingPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           price_id: priceId,
           mode: 'subscription',
           success_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/pricing`,
+          user_id: user.id,
         }),
       });
 
