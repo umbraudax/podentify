@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Mic, Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import AuthModal from '@/components/AuthModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +16,6 @@ import {
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
@@ -35,14 +32,18 @@ export default function Header() {
   const navigationItems = [
     { name: 'Features', href: '#features' },
     { name: 'How It Works', href: '#how-it-works' },
-    { name: 'Pricing', href: '#pricing' },
+    { name: 'Pricing', href: '/pricing' },
     { name: 'Demo', href: '#demo' }
   ];
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (href.startsWith('/')) {
+      router.push(href);
+    } else {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     setIsMobileMenuOpen(false);
   };
@@ -53,13 +54,9 @@ export default function Header() {
     router.push('/');
   };
 
-  const openAuthModal = (mode: 'signin' | 'signup') => {
-    setAuthMode(mode);
-    setAuthModalOpen(true);
-  };
 
   return (
-    <>
+    <div>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
           ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200' 
@@ -122,13 +119,13 @@ export default function Header() {
                   <Button 
                     variant="ghost" 
                     className="text-gray-700 hover:text-blue-600 font-medium"
-                    onClick={() => openAuthModal('signin')}
+                    onClick={() => router.push('/auth/signin')}
                   >
                     Sign In
                   </Button>
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                    onClick={() => openAuthModal('signup')}
+                    onClick={() => router.push('/auth/signup')}
                   >
                     Sign Up Free
                   </Button>
@@ -188,19 +185,13 @@ export default function Header() {
                     <Button 
                       variant="ghost" 
                       className="w-full justify-start text-gray-700 hover:text-blue-600 font-medium"
-                      onClick={() => {
-                        openAuthModal('signin');
-                        setIsMobileMenuOpen(false);
-                      }}
+                      onClick={() => router.push('/auth/signin')}
                     >
                       Sign In
                     </Button>
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                      onClick={() => {
-                        openAuthModal('signup');
-                        setIsMobileMenuOpen(false);
-                      }}
+                      onClick={() => router.push('/auth/signup')}
                     >
                       Sign Up Free
                     </Button>
@@ -211,12 +202,6 @@ export default function Header() {
           </div>
         </div>
       )}
-
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        defaultMode={authMode}
-      />
-    </>
+    </div>
   );
 }

@@ -4,23 +4,23 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import AuthModal from '@/components/AuthModal';
+import { useRouter } from 'next/navigation';
 
 export default function CTASection() {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
 
   const handleGetStarted = () => {
     if (user) {
       // Redirect to dashboard
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } else {
-      setAuthModalOpen(true);
+      router.push('/auth/signup');
     }
   };
 
   return (
-    <>
+    <div>
       <section className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
@@ -105,12 +105,6 @@ export default function CTASection() {
         </div>
       </div>
       </section>
-
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        defaultMode="signup"
-      />
-    </>
+    </div>
   );
 }

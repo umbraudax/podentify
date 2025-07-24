@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Upload, FileAudio, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import SubscriptionStatus from '@/components/dashboard/SubscriptionStatus';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -254,6 +255,8 @@ export default function Dashboard() {
 
           {/* Stats Sidebar */}
           <div className="space-y-6">
+            <SubscriptionStatus />
+            
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Quick Stats</CardTitle>
