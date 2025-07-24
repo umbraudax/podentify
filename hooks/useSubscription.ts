@@ -46,11 +46,12 @@ export function useSubscription() {
         // If the view doesn't exist, set subscription to null without error
         if (error.code === '42P01') {
           setSubscription(null);
+          setLoading(false);
+          return;
         } else {
           console.error('Error fetching subscription:', error.message);
-          setSubscription(null);
+          throw error;
         }
-        throw error;
       }
 
       setSubscription(data?.[0] || null);
