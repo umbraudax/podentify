@@ -41,6 +41,8 @@ export function useSubscription() {
         .select('*')
         .limit(1)
         .maybeSingle();
+
+      if (error) {
         // If the view doesn't exist, set subscription to null without error
         if (error.code === '42P01') {
           setSubscription(null);
