@@ -12,8 +12,8 @@ export default function CTASection() {
 
   const handleGetStarted = () => {
     if (user) {
-      // Redirect to dashboard or upload page
-      console.log('Redirect to dashboard');
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
     } else {
       setAuthModalOpen(true);
     }

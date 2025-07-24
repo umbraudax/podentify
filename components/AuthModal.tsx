@@ -45,6 +45,8 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
           setError(error.message);
         } else {
           onClose();
+          // Redirect to dashboard after successful sign in
+          window.location.href = '/dashboard';
         }
       }
     } catch (err) {

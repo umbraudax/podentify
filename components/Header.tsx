@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Mic, Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +24,7 @@ export default function Header() {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   
   const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +52,8 @@ export default function Header() {
 
   const handleSignOut = async () => {
     await signOut();
+    // Redirect to home page after sign out
+    router.push('/');
   };
 
   const openAuthModal = (mode: 'signin' | 'signup') => {
