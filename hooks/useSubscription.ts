@@ -54,7 +54,8 @@ export function useSubscription() {
         }
       }
 
-      setSubscription(data?.[0] || null);
+      console.log('Subscription data:', data);
+      setSubscription(data || null);
     } catch (err) {
       console.error('Error fetching subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
@@ -88,11 +89,17 @@ export function useSubscription() {
     return subscription?.cancel_at_period_end === true;
   };
 
+  // Add a manual refresh with polling capability
+  const refreshSubscription = async () => {
+    await fetchSubscription();
+  };
+
   return {
     subscription,
     loading,
     error,
     refetch: fetchSubscription,
+    refresh: refreshSubscription,
     getSubscriptionPlan,
     isActive,
     isPastDue,

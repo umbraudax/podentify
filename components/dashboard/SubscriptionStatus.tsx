@@ -1,13 +1,13 @@
 'use client';
 
-import { Crown, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Crown, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useRouter } from 'next/navigation';
 
 export default function SubscriptionStatus() {
-  const { subscription, loading, isActive, isPastDue, isCanceled, willCancelAtPeriodEnd, getSubscriptionPlan } = useSubscription();
+  const { subscription, loading, isActive, isPastDue, isCanceled, willCancelAtPeriodEnd, getSubscriptionPlan, refresh } = useSubscription();
   const router = useRouter();
 
   if (loading) {
@@ -27,20 +27,31 @@ export default function SubscriptionStatus() {
 
   if (!subscription || !planName) {
     return (
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-blue-200 bg-blue-50">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2 text-orange-800">
-            <AlertTriangle className="w-5 h-5" />
+          <CardTitle className="flex items-center space-x-2 text-blue-800">
+            <Crown className="w-5 h-5" />
             <span>Free Plan</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-orange-700">
-            You're currently on the free plan with limited features.
+          <p className="text-sm text-blue-700">
+            You&apos;re currently on the free plan with limited features.
           </p>
+          <div className="pt-2">
+            <p className="text-xs text-blue-600 font-medium">
+              • 3 episodes per month
+            </p>
+            <p className="text-xs text-blue-600 font-medium">
+              • Basic show notes
+            </p>
+            <p className="text-xs text-blue-600 font-medium">
+              • 2 social clips per episode
+            </p>
+          </div>
           <Button 
             size="sm" 
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 w-full"
             onClick={() => router.push('/pricing')}
           >
             Upgrade to Pro
@@ -66,7 +77,7 @@ export default function SubscriptionStatus() {
   };
 
   const getStatusColor = () => {
-    if (isActive() && !willCancelAtPeriodEnd()) return 'border-green-200 bg-green-50';
+    if (isActive() && !willCancelAtPeriodEnd()) return 'border-green-200 bg-gradient-to-br from-green-50 to-blue-50';
     if (isActive() && willCancelAtPeriodEnd()) return 'border-yellow-200 bg-yellow-50';
     if (isPastDue()) return 'border-yellow-200 bg-yellow-50';
     if (isCanceled()) return 'border-red-200 bg-red-50';
@@ -81,10 +92,20 @@ export default function SubscriptionStatus() {
   return (
     <Card className={getStatusColor()}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center space-x-2">
-          <Crown className="w-5 h-5 text-blue-600" />
-          <span>{planName}</span>
-          {getStatusIcon()}
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Crown className="w-5 h-5 text-blue-600" />
+            <span>{planName}</span>
+            {getStatusIcon()}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={refresh}
+            className="h-8 w-8 p-0 hover:bg-white/50"
+          >
+            <RefreshCw className="w-3 h-3" />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -106,6 +127,18 @@ export default function SubscriptionStatus() {
             <span className="font-medium capitalize">
               {subscription.payment_method_brand} •••• {subscription.payment_method_last4}
             </span>
+          </div>
+        )}
+
+        {isActive() && !willCancelAtPeriodEnd() && (
+          <div className="pt-2 border-t border-green-200">
+            <p className="text-xs text-green-700 font-medium mb-2">Pro Benefits Active:</p>
+            <div className="space-y-1">
+              <p className="text-xs text-green-600">• Unlimited episode processing</p>
+              <p className="text-xs text-green-600">• AI-generated show notes</p>
+              <p className="text-xs text-green-600">• Social media clip extraction</p>
+              <p className="text-xs text-green-600">• Priority processing</p>
+            </div>
           </div>
         )}
 

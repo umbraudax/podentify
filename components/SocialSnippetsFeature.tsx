@@ -141,11 +141,11 @@ export default function SocialSnippetsFeature() {
               </div>
               
               <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">
-                Your Podcast's Best Moments, Ready to Share.
+                Your Podcast&apos;s Best Moments, Ready to Share.
               </h2>
               
               <p className="text-xl text-gray-600 leading-relaxed">
-                Never miss a viral moment. Podtentify's AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
+                Never miss a viral moment. Podtentify&apos;s AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
               </p>
             </div>
 

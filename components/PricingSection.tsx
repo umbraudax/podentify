@@ -86,7 +86,7 @@ export default function PricingSection() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Choose the plan that fits your podcast workflow. Start free, upgrade when you're ready.
+            Choose the plan that fits your podcast workflow. Start free, upgrade when you&apos;re ready.
           </p>
         </div>
 
@@ -225,7 +225,7 @@ export default function PricingSection() {
                 Can I cancel anytime?
               </h4>
               <p className="text-gray-600 text-sm">
-                Yes, cancel anytime. You'll keep access until your billing period ends.
+                Yes, cancel anytime. You&apos;ll keep access until your billing period ends.
               </p>
             </div>
             <div>

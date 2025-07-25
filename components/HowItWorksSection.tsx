@@ -32,7 +32,7 @@ export default function HowItWorksSection() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-20">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            It's As Easy As 1, 2, 3.
+            It&apos;s As Easy As 1, 2, 3.
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Transform your podcast workflow in minutes, not hours. Our streamlined process makes content amplification effortless.

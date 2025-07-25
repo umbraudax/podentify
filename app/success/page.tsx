@@ -6,20 +6,26 @@ import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function SuccessPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { refresh: refreshSubscription } = useSubscription();
   const router = useRouter();
 
   useEffect(() => {
     // Simulate a brief loading period to allow webhook processing
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
+      // Refresh subscription status after checkout
+      if (refreshSubscription) {
+        await refreshSubscription();
+      }
       setLoading(false);
-    }, 2000);
+    }, 3000); // Give webhooks more time to process
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [refreshSubscription]);
 
   useEffect(() => {
     if (!user && !loading) {
@@ -60,7 +66,7 @@ export default function SuccessPage() {
           <CardContent className="py-12 space-y-8">
             <div className="space-y-6">
               <h3 className="text-2xl font-bold text-gray-900">
-                🎉 You're all set! Here's what you get:
+                🎉 You&apos;re all set! Here&apos;s what you get:
               </h3>
               
               <div className="grid md:grid-cols-2 gap-4 text-left">

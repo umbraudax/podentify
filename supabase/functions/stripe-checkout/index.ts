@@ -34,20 +34,32 @@ function corsResponse(body: string | object | null, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  console.log('Checkout request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   try {
     if (req.method === 'OPTIONS') {
+      console.log('Handling OPTIONS request');
       return corsResponse({}, 204);
     }
 
     if (req.method !== 'POST') {
+      console.log('Invalid method:', req.method);
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
     const { price_id, success_url, cancel_url, mode } = await req.json();
+    console.log('Input parameters:', { price_id, success_url, cancel_url, mode });
 
     // Get user from Authorization header
     const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.log('Missing Authorization header');
       return corsResponse({ error: 'Authorization header required' }, 401);
     }
 
@@ -57,7 +69,14 @@ Deno.serve(async (req) => {
       error: getUserError,
     } = await supabase.auth.getUser(token);
 
+    console.log('User authentication:', { 
+      userId: user?.id, 
+      userEmail: user?.email,
+      error: getUserError?.message 
+    });
+
     if (getUserError || !user) {
+      console.log('Authentication failed:', getUserError?.message);
       return corsResponse({ error: 'Invalid authorization token' }, 401);
     }
 
@@ -72,7 +91,27 @@ Deno.serve(async (req) => {
     );
 
     if (error) {
+      console.log('Parameter validation failed:', error);
       return corsResponse({ error }, 400);
+    }
+
+    // Validate price_id exists in Stripe
+    try {
+      const price = await stripe.prices.retrieve(price_id);
+      console.log('Price validation successful:', { 
+        priceId: price.id, 
+        active: price.active,
+        currency: price.currency,
+        unitAmount: price.unit_amount 
+      });
+      
+      if (!price.active) {
+        console.log('Price is inactive:', price_id);
+        return corsResponse({ error: 'Selected price is inactive' }, 400);
+      }
+    } catch (priceError: any) {
+      console.log('Invalid price_id:', { price_id, error: priceError.message });
+      return corsResponse({ error: 'Invalid price_id' }, 400);
     }
 
     const { data: customer, error: getCustomerError } = await supabase
@@ -179,6 +218,14 @@ Deno.serve(async (req) => {
     }
 
     // create Checkout Session
+    console.log('Creating checkout session with params:', {
+      customer: customerId,
+      mode,
+      price_id,
+      success_url,
+      cancel_url
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -191,9 +238,20 @@ Deno.serve(async (req) => {
       mode,
       success_url,
       cancel_url,
+      metadata: {
+        userId: user.id,
+        price_id: price_id,
+        mode: mode
+      },
     });
 
-    console.log(`Created checkout session ${session.id} for customer ${customerId}`);
+    console.log('Checkout session created successfully:', {
+      sessionId: session.id,
+      url: session.url,
+      customer: session.customer,
+      mode: session.mode,
+      status: session.status
+    });
 
     return corsResponse({ sessionId: session.id, url: session.url });
   } catch (error: any) {

@@ -4,52 +4,103 @@ import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
+
+console.log('Environment check:', {
+  hasStripeSecret: !!stripeSecret,
+  hasWebhookSecret: !!stripeWebhookSecret,
+  hasSupabaseUrl: !!Deno.env.get('SUPABASE_URL'),
+  hasServiceRoleKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+});
+
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'Podtentify Webhook',
     version: '1.0.0',
   },
 });
 
-const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!, 
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
 
 Deno.serve(async (req) => {
+  console.log('Webhook request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
+  // Add CORS headers to all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, stripe-signature, authorization',
+  };
+
   try {
     // Handle OPTIONS request for CORS preflight
     if (req.method === 'OPTIONS') {
-      return new Response(null, { status: 204 });
+      console.log('Handling OPTIONS request');
+      return new Response(null, { 
+        status: 204,
+        headers: corsHeaders
+      });
     }
 
     if (req.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+      console.log('Invalid method:', req.method);
+      return new Response('Method not allowed', { 
+        status: 405,
+        headers: corsHeaders
+      });
     }
 
     // get the signature from the header
     const signature = req.headers.get('stripe-signature');
+    console.log('Stripe signature present:', !!signature);
 
     if (!signature) {
-      return new Response('No signature found', { status: 400 });
+      console.log('No Stripe signature found in headers');
+      return new Response('No signature found', { 
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
     // get the raw body
     const body = await req.text();
+    console.log('Request body length:', body.length);
 
     // verify the webhook signature
     let event: Stripe.Event;
 
     try {
+      console.log('Attempting to verify webhook signature...');
       event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
+      console.log('Webhook signature verified successfully. Event type:', event.type);
     } catch (error: any) {
-      console.error(`Webhook signature verification failed: ${error.message}`);
-      return new Response(`Webhook signature verification failed: ${error.message}`, { status: 400 });
+      console.error(`Webhook signature verification failed:`, {
+        error: error.message,
+        signature: signature.substring(0, 50) + '...',
+        bodyLength: body.length,
+        webhookSecretPresent: !!stripeWebhookSecret
+      });
+      return new Response(`Webhook signature verification failed: ${error.message}`, { 
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
     EdgeRuntime.waitUntil(handleEvent(event));
 
-    return Response.json({ received: true });
+    return Response.json({ received: true }, { headers: corsHeaders });
   } catch (error: any) {
     console.error('Error processing webhook:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { 
+      status: 500,
+      headers: corsHeaders
+    });
   }
 });
 
@@ -77,11 +128,33 @@ async function handleEvent(event: Stripe.Event) {
     let isSubscription = true;
 
     if (event.type === 'checkout.session.completed') {
-      const { mode } = stripeData as Stripe.Checkout.Session;
+      const { mode, metadata } = stripeData as Stripe.Checkout.Session;
 
       isSubscription = mode === 'subscription';
 
       console.info(`Processing ${isSubscription ? 'subscription' : 'one-time payment'} checkout session`);
+      console.info('Session metadata:', metadata);
+
+      // Handle user plan updates for subscription checkouts
+      if (isSubscription && metadata?.userId && metadata?.price_id) {
+        try {
+          const { error: planError } = await supabase
+            .from('user_plans')
+            .upsert({
+              user_id: metadata.userId,
+              plan_id: metadata.price_id,
+              updated_at: new Date().toISOString()
+            });
+
+          if (planError) {
+            console.error('Error updating user plan:', planError);
+          } else {
+            console.info(`Successfully updated user plan for user ${metadata.userId} to plan ${metadata.price_id}`);
+          }
+        } catch (planUpdateError) {
+          console.error('Failed to update user plan:', planUpdateError);
+        }
+      }
     }
 
     const { mode, payment_status } = stripeData as Stripe.Checkout.Session;
