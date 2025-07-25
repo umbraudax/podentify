@@ -40,7 +40,6 @@ export default function PricingSection() {
         },
         body: JSON.stringify({
           price_id: priceId,
-          mode: 'subscription',
           success_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/#pricing`,
         }),
