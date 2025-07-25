@@ -195,8 +195,8 @@ export default function AccountSettings() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No active subscription</h3>
                   <p className="text-gray-600 mb-6">You&apos;re currently on the free plan.</p>
                   <Button 
-                    onClick={() => router.push('/pricing')}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => router.push('/#pricing')}
+                    onClick={() => router.push('/#pricing')}
                   >
                     Upgrade to Pro
                   </Button>

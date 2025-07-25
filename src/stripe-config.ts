@@ -9,12 +9,12 @@ export interface StripeProduct {
 
 export const stripeProducts: StripeProduct[] = [
   {
-    id: 'prod_Sk0aNiMimbxyy8',
-    priceId: 'price_1RoWZGPhcFyuM9RIB6syfWBB',
-    name: 'SAAS test',
-    description: 'Premium subscription plan with advanced features',
+    id: 'prod_SkKGgTb6PmM6aI',
+    priceId: 'price_1Ropc4BKXSirmNWMrlLT94MA',
+    name: 'Podtentify Pro',
+    description: 'Premium subscription plan with unlimited episodes, AI-generated show notes, social media clips, and priority processing.',
     mode: 'subscription',
-    price: '$9.99/month'
+    price: '$30.00/month'
   }
 ];
 

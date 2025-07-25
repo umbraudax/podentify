@@ -53,7 +53,7 @@ export default function SubscriptionStatus() {
           <Button 
             size="sm" 
             className="bg-blue-600 hover:bg-blue-700 w-full"
-            onClick={() => router.push('/pricing')}
+            onClick={() => router.push('/#pricing')}
           >
             Upgrade to Pro
           </Button>

@@ -176,7 +176,7 @@ export default function PricingSection() {
               </div>
               <CardTitle className="text-2xl font-bold">Pro</CardTitle>
               <div className="text-4xl font-bold text-gray-900 mt-4">
-                $9.99
+                $30.00
                 <span className="text-lg font-normal text-gray-600">/month</span>
               </div>
               <p className="text-gray-600">For serious podcasters</p>
@@ -239,7 +239,6 @@ export default function PricingSection() {
               <Button variant="outline" className="w-full">
                 Contact Sales
               </Button>
-                disabled={loading !== null}
             </CardContent>
           </Card>
         </div>
