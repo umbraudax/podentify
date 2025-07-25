@@ -186,6 +186,43 @@ Deno.serve(async (req) => {
       console.log(`Successfully set up new customer ${customerId} with subscription record`);
     } else {
       customerId = customer.customer_id;
+      
+      // Verify the customer still exists in Stripe
+      try {
+        await stripe.customers.retrieve(customerId);
+        console.log('Existing customer verified:', customerId);
+      } catch (customerError: any) {
+        if (customerError.code === 'resource_missing') {
+          console.log('Customer no longer exists in Stripe, creating new one:', customerId);
+          
+          // Create a new customer since the old one doesn't exist
+          const newCustomer = await stripe.customers.create({
+            email: user.email,
+            metadata: {
+              userId: user.id,
+            },
+          });
+
+          // Update the database with the new customer ID
+          const { error: updateCustomerError } = await supabase
+            .from('stripe_customers')
+            .update({
+              customer_id: newCustomer.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id);
+
+          if (updateCustomerError) {
+            console.error('Failed to update customer ID in database:', updateCustomerError);
+            return corsResponse({ error: 'Failed to update customer information' }, 500);
+          }
+
+          customerId = newCustomer.id;
+          console.log(`Updated customer ID from ${customer.customer_id} to ${customerId}`);
+        } else {
+          throw customerError;
+        }
+      }
 
       if (mode === 'subscription') {
         // Verify subscription exists for existing customer
