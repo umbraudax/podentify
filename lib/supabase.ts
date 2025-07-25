@@ -115,6 +115,29 @@ export type Database = {
           created_at?: string;
         };
       };
+      user_preferences: {
+        Row: {
+          user_id: string;
+          dark_mode: boolean;
+          email_notifications: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          dark_mode?: boolean;
+          email_notifications?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          dark_mode?: boolean;
+          email_notifications?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };

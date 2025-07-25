@@ -41,7 +41,7 @@ export default function HowItWorksSection() {
 
         <div className="relative">
           {/* Connection Lines */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-green-200 transform -translate-y-1/2"></div>
+          <div className="hidden lg:block absolute top-10 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-green-200"></div>
           
           <div className="grid lg:grid-cols-3 gap-12 relative">
             {steps.map((step, index) => (

@@ -6,6 +6,7 @@ import { Check, Sparkles, Zap, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { stripeProducts } from '@/src/stripe-config';
 import { supabase } from '@/lib/supabase';
 import { ApiResponse } from '@/lib/types';
@@ -14,6 +15,7 @@ export default function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { isActive } = useSubscription();
   const router = useRouter();
 
   const handleSubscribe = async (priceId: string) => {
@@ -80,6 +82,10 @@ export default function PricingSection() {
     }
   };
 
+  const handleManageSubscription = () => {
+    router.push('/account/settings');
+  };
+
   const features = [
     'Unlimited episode processing',
     'AI-generated show notes',
@@ -90,6 +96,8 @@ export default function PricingSection() {
     'Export to multiple formats',
     'Email support'
   ];
+
+  const hasActiveSubscription = isActive();
 
   return (
     <section id="pricing" className="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
@@ -153,14 +161,16 @@ export default function PricingSection() {
                   <span className="text-gray-700">Community support</span>
                 </li>
               </ul>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => router.push('/auth/signup')}
-                disabled={loading !== null}
-              >
-                Get Started Free
-              </Button>
+              {!hasActiveSubscription && (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => router.push('/auth/signup')}
+                  disabled={loading !== null}
+                >
+                  Get Started Free
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -191,14 +201,23 @@ export default function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => handleSubscribe(stripeProducts[0].priceId)}
-                disabled={loading === stripeProducts[0].priceId}
-              >
-                {loading === stripeProducts[0].priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Subscribe to Pro
-              </Button>
+              {hasActiveSubscription ? (
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={handleManageSubscription}
+                >
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleSubscribe(stripeProducts[0].priceId)}
+                  disabled={loading === stripeProducts[0].priceId}
+                >
+                  {loading === stripeProducts[0].priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Subscribe to Pro
+                </Button>
+              )}
             </CardContent>
           </Card>
 

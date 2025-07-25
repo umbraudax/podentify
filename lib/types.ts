@@ -15,6 +15,27 @@ export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 export type EpisodeUpdate = Database['public']['Tables']['episodes']['Update'];
 export type SocialClipUpdate = Database['public']['Tables']['social_clips']['Update'];
 
+// User preferences types
+export interface UserPreferences {
+  user_id: string;
+  dark_mode: boolean;
+  email_notifications: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPreferencesInsert {
+  user_id: string;
+  dark_mode?: boolean;
+  email_notifications?: boolean;
+}
+
+export interface UserPreferencesUpdate {
+  dark_mode?: boolean;
+  email_notifications?: boolean;
+  updated_at?: string;
+}
+
 // Subscription types
 export interface Subscription {
   customer_id: string;

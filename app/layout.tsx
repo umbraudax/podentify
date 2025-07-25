@@ -1,19 +1,28 @@
-import './globals.css';
-import type { Metadata } from 'next';
+'use client';
+
 import { Inter } from 'next/font/google';
+import './globals.css';
+import { Toaster } from '@/components/ui/toaster';
+import { usePreferences } from '@/hooks/usePreferences';
+import { useEffect } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'Podtentify - Your Podcast Content, Amplified',
-  description: 'Stop Transcribing. Start Amplifying. Podtentify turns your audio into instant show notes & shareable moments using AI.',
-  keywords: 'podcast, show notes, AI transcription, social media clips, podcast promotion',
-  openGraph: {
-    title: 'Podtentify - Your Podcast Content, Amplified',
-    description: 'Stop Transcribing. Start Amplifying. Podtentify turns your audio into instant show notes & shareable moments using AI.',
-    type: 'website',
-  },
-};
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { isDarkMode, loading } = usePreferences();
+
+  useEffect(() => {
+    if (!loading) {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [isDarkMode, loading]);
+
+  return <>{children}</>;
+}
 
 export default function RootLayout({
   children,
@@ -21,8 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+    <html lang="en">
+      <body className={`${inter.className} bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+        <Toaster />
+      </body>
     </html>
   );
 }
