@@ -10,7 +10,7 @@ export interface StripeProduct {
 export const stripeProducts: StripeProduct[] = [
   {
     id: 'prod_SkKGgTb6PmM6aI',
-    priceId: 'price_PLACEHOLDER_UPDATE_WITH_REAL_PRICE_ID',
+    priceId: 'price_1Ropc4BKXSirmNWMrlLT94MA',
     name: 'Podtentify Pro',
     description: 'Premium subscription plan with unlimited episodes, AI-generated show notes, social media clips, and priority processing.',
     mode: 'subscription',
