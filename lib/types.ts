@@ -72,3 +72,50 @@ export interface FileUploadProgress {
   status: 'uploading' | 'processing' | 'completed' | 'error';
   message?: string;
 }
+
+// Transcript types
+export interface Transcript {
+  id: string;
+  episode_id: string;
+  full_text?: string;
+  confidence?: number;
+  status: 'processing' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TranscriptWord {
+  id: string;
+  transcript_id: string;
+  word: string;
+  start_time: number;
+  end_time: number;
+  confidence?: number;
+  speaker?: string;
+  word_index: number;
+  created_at: string;
+}
+
+// AssemblyAI response types
+export interface AssemblyAIWord {
+  text: string;
+  start: number;
+  end: number;
+  confidence: number;
+  speaker?: string;
+}
+
+export interface AssemblyAITranscriptResponse {
+  id: string;
+  text: string;
+  confidence: number;
+  words: AssemblyAIWord[];
+  utterances?: Array<{
+    confidence: number;
+    end: number;
+    speaker: string;
+    start: number;
+    text: string;
+    words: AssemblyAIWord[];
+  }>;
+}

@@ -68,8 +68,8 @@ export default function PricingSection() {
 
       if (data.data?.url) {
         window.location.href = data.data.url;
-      } else if (data.url) {
-        window.location.href = data.url;
+      } else if ((data as any).url) {
+        window.location.href = (data as any).url;
       } else {
         throw new Error('No checkout URL received');
       }
