@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { formatDate, getUserDisplayName } from '@/lib/utils';
 
 export default function AccountSettings() {
   const { user, loading } = useAuth();
@@ -19,6 +20,7 @@ export default function AccountSettings() {
     fullName: '',
     email: ''
   });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,12 +31,27 @@ export default function AccountSettings() {
   useEffect(() => {
     if (user) {
       setUserInfo({
-        fullName: user.user_metadata?.full_name || '',
+        fullName: getUserDisplayName(user),
         email: user.email || ''
       });
     }
   }, [user]);
 
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // TODO: Implement profile update logic
+      console.log('Saving profile:', userInfo);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
   if (loading || subscriptionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -47,14 +64,6 @@ export default function AccountSettings() {
     return null;
   }
 
-  const formatDate = (timestamp: number | null) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const planName = getSubscriptionPlan();
 
@@ -113,8 +122,12 @@ export default function AccountSettings() {
                   <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Save Changes
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </CardContent>
           </Card>

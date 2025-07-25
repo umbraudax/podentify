@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Mic, Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { getUserDisplayName } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,11 +50,15 @@ export default function Header() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    // Redirect to home page after sign out
-    router.push('/');
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
+  const userDisplayName = getUserDisplayName(user);
 
   return (
     <div>
@@ -97,9 +102,7 @@ export default function Header() {
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-gray-700 font-medium">
-                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                      </span>
+                      <span className="text-gray-700 font-medium">{userDisplayName}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -167,7 +170,7 @@ export default function Header() {
                 {user ? (
                   <>
                     <div className="px-4 py-2 text-sm text-gray-600">
-                      {user.user_metadata?.full_name || user.email}
+                      {userDisplayName}
                     </div>
                     <Button 
                       variant="ghost" 

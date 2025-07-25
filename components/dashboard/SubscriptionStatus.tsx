@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useRouter } from 'next/navigation';
+import { formatDate } from '@/lib/utils';
 
 export default function SubscriptionStatus() {
   const { subscription, loading, isActive, isPastDue, isCanceled, willCancelAtPeriodEnd, getSubscriptionPlan, refresh } = useSubscription();
@@ -84,10 +85,6 @@ export default function SubscriptionStatus() {
     return 'border-gray-200 bg-gray-50';
   };
 
-  const formatDate = (timestamp: number | null) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp * 1000).toLocaleDateString();
-  };
 
   return (
     <Card className={getStatusColor()}>
@@ -103,6 +100,7 @@ export default function SubscriptionStatus() {
             size="sm"
             onClick={refresh}
             className="h-8 w-8 p-0 hover:bg-white/50"
+            title="Refresh subscription status"
           >
             <RefreshCw className="w-3 h-3" />
           </Button>

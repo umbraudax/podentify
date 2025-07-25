@@ -7,11 +7,14 @@ import { Upload, FileAudio, Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SubscriptionStatus from '@/components/dashboard/SubscriptionStatus';
+import { isValidAudioFile, isValidFileSize, formatFileSize, getUserDisplayName } from '@/lib/utils';
+import { SUPPORTED_AUDIO_FORMATS, MAX_FILE_SIZE } from '@/lib/constants';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,10 +62,31 @@ export default function Dashboard() {
   };
 
   const handleFiles = (files: FileList) => {
-    // TODO: Implement file upload logic
-    console.log('Files to upload:', files);
+    setUploadError(null);
+    
+    const file = files[0];
+    
+    // Validate file type
+    if (!isValidAudioFile(file)) {
+      setUploadError(`Invalid file type. Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(', ').toUpperCase()}`);
+      return;
+    }
+    
+    // Validate file size
+    if (!isValidFileSize(file)) {
+      setUploadError(`File too large. Maximum size: ${formatFileSize(MAX_FILE_SIZE)}`);
+      return;
+    }
+    
+    // TODO: Implement actual file upload logic
+    console.log('Valid file to upload:', {
+      name: file.name,
+      size: formatFileSize(file.size),
+      type: file.type
+    });
   };
 
+  const userDisplayName = getUserDisplayName(user);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,7 +97,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-gray-600 mt-1">
-                Welcome back, {user.user_metadata?.full_name || user.email?.split('@')[0]}!
+                Welcome back, {userDisplayName}!
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -111,6 +135,12 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {uploadError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 text-sm">{uploadError}</p>
+                  </div>
+                )}
+                
                 <div
                   className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
                     dragActive 
@@ -142,7 +172,7 @@ export default function Dashboard() {
                         or click to browse your files
                       </p>
                       <p className="text-sm text-gray-500">
-                        Supports MP3, WAV, M4A files up to 500MB
+                        Supports {SUPPORTED_AUDIO_FORMATS.join(', ').toUpperCase()} files up to {formatFileSize(MAX_FILE_SIZE)}
                       </p>
                     </div>
                     

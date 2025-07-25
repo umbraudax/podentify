@@ -2,18 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { getProductByPriceId } from '@/src/stripe-config';
-
-interface Subscription {
-  customer_id: string;
-  subscription_id: string | null;
-  subscription_status: string;
-  price_id: string | null;
-  current_period_start: number | null;
-  current_period_end: number | null;
-  cancel_at_period_end: boolean;
-  payment_method_brand: string | null;
-  payment_method_last4: string | null;
-}
+import { Subscription } from '@/lib/types';
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -22,18 +11,31 @@ export function useSubscription() {
   const { user } = useAuth();
 
   useEffect(() => {
+    let mounted = true;
+    
     if (!user) {
       setSubscription(null);
       setLoading(false);
       return;
     }
 
-    fetchSubscription();
+    fetchSubscription().then(() => {
+      if (mounted) {
+        // Subscription fetched successfully
+      }
+    });
+    
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   const fetchSubscription = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
+      setError(null);
       
       // Check if the view exists first
       const { data, error } = await supabase
@@ -45,8 +47,8 @@ export function useSubscription() {
       if (error) {
         // If the view doesn't exist, set subscription to null without error
         if (error.code === '42P01') {
+          console.warn('Stripe views not available - user may need to connect to Supabase');
           setSubscription(null);
-          setLoading(false);
           return;
         } else {
           console.error('Error fetching subscription:', error.message);
@@ -54,11 +56,11 @@ export function useSubscription() {
         }
       }
 
-      console.log('Subscription data:', data);
       setSubscription(data || null);
     } catch (err) {
       console.error('Error fetching subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
+      setSubscription(null);
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,6 @@ export function useSubscription() {
     return subscription?.cancel_at_period_end === true;
   };
 
-  // Add a manual refresh with polling capability
   const refreshSubscription = async () => {
     await fetchSubscription();
   };

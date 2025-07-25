@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { stripeProducts } from '@/src/stripe-config';
 import { supabase } from '@/lib/supabase';
+import { ApiResponse } from '@/lib/types';
 
 export default function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -21,6 +23,7 @@ export default function PricingSection() {
     }
 
     setLoading(priceId);
+    setError(null);
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -45,11 +48,18 @@ export default function PricingSection() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
 
       if (data.error) {
         throw new Error(data.error);
@@ -57,10 +67,13 @@ export default function PricingSection() {
 
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert(`Failed to start checkout process: ${error instanceof Error ? error.message : 'Please try again.'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
+      setError(`Failed to start checkout: ${errorMessage}`);
     } finally {
       setLoading(null);
     }
@@ -89,6 +102,21 @@ export default function PricingSection() {
             Choose the plan that fits your podcast workflow. Start free, upgrade when you&apos;re ready.
           </p>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800 text-sm">{error}</p>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800 text-sm underline mt-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -128,6 +156,7 @@ export default function PricingSection() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => router.push('/auth/signup')}
+                disabled={loading !== null}
               >
                 Get Started Free
               </Button>
@@ -210,6 +239,7 @@ export default function PricingSection() {
               <Button variant="outline" className="w-full">
                 Contact Sales
               </Button>
+                disabled={loading !== null}
             </CardContent>
           </Card>
         </div>
