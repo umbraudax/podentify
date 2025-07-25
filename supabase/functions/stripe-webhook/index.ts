@@ -3,7 +3,7 @@ import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
-const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
+const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SIGNING_SECRET')!;
 
 console.log('Environment check:', {
   hasStripeSecret: !!stripeSecret,
@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
         headers: corsHeaders
       });
     }
+    
 
     // get the signature from the header
     const signature = req.headers.get('stripe-signature');
