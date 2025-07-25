@@ -43,7 +43,6 @@ export default function PricingSection() {
           mode: 'subscription',
           success_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/#pricing`,
-          user_id: user.id,
         }),
       });
 
@@ -65,7 +64,9 @@ export default function PricingSection() {
         throw new Error(data.error);
       }
 
-      if (data.url) {
+      if (data.data?.url) {
+        window.location.href = data.data.url;
+      } else if (data.url) {
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
