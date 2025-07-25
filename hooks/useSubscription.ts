@@ -56,7 +56,23 @@ export function useSubscription() {
         }
       }
 
-      setSubscription(data || null);
+      if (data) {
+        // Convert database null values to match TypeScript interface
+        const processedSubscription: Subscription = {
+          customer_id: data.customer_id || '',
+          subscription_id: data.subscription_id,
+          subscription_status: data.subscription_status || 'inactive',
+          price_id: data.price_id,
+          current_period_start: data.current_period_start,
+          current_period_end: data.current_period_end,
+          cancel_at_period_end: data.cancel_at_period_end ?? false,
+          payment_method_brand: data.payment_method_brand,
+          payment_method_last4: data.payment_method_last4,
+        };
+        setSubscription(processedSubscription);
+      } else {
+        setSubscription(null);
+      }
     } catch (err) {
       console.error('Error fetching subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');

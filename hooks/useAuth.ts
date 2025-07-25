@@ -83,6 +83,20 @@ export function useAuth() {
   const signOut = async () => {
     setError(null);
     
+    // Reset theme to light mode before signing out
+    document.documentElement.classList.remove('dark');
+    
+    // Clear all theme-related localStorage to ensure fresh start
+    try {
+      localStorage.removeItem('darkMode');
+      localStorage.removeItem('theme');
+      // Also clear any other potential theme keys
+      localStorage.removeItem('color-scheme');
+      localStorage.removeItem('theme-preference');
+    } catch (err) {
+      console.error('Error clearing theme from localStorage:', err);
+    }
+    
     const { error } = await supabase.auth.signOut();
     
     if (error) {

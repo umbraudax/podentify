@@ -39,11 +39,16 @@ export default function Dashboard() {
   }, [user, loading, router]);
 
   const fetchRecentEpisodes = async () => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
     try {
       const { data: episodes, error } = await supabase
         .from('episodes')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -356,7 +361,7 @@ export default function Dashboard() {
                             <div className="flex items-center space-x-2 mt-1">
                               <Clock className="w-3 h-3 text-gray-400" />
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(episode.created_at).toLocaleDateString()}
+                                {episode.created_at ? new Date(episode.created_at).toLocaleDateString() : 'Unknown date'}
                               </span>
                               {episode.duration && (
                                 <>

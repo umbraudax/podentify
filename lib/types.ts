@@ -1,19 +1,22 @@
-import { Database } from './supabase';
+import { Database } from './database.types';
 
 // Database types
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Episode = Database['public']['Tables']['episodes']['Row'];
 export type SocialClip = Database['public']['Tables']['social_clips']['Row'];
+export type Chapter = Database['public']['Tables']['chapters']['Row'];
 
 // Insert types
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 export type EpisodeInsert = Database['public']['Tables']['episodes']['Insert'];
 export type SocialClipInsert = Database['public']['Tables']['social_clips']['Insert'];
+export type ChapterInsert = Database['public']['Tables']['chapters']['Insert'];
 
 // Update types
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 export type EpisodeUpdate = Database['public']['Tables']['episodes']['Update'];
 export type SocialClipUpdate = Database['public']['Tables']['social_clips']['Update'];
+export type ChapterUpdate = Database['public']['Tables']['chapters']['Update'];
 
 // User preferences types
 export interface UserPreferences {

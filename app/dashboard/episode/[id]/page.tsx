@@ -26,7 +26,10 @@ import {
   Trash2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Episode, Transcript, TranscriptWord } from '@/lib/types';
+import { Episode, Transcript, TranscriptWord, Chapter, SocialClip } from '@/lib/types';
+import ChaptersSection from '@/components/dashboard/ChaptersSection';
+import SocialClipsTab from '@/components/dashboard/SocialClipsTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function EpisodeProcessingPage() {
   const { user, session, loading: authLoading } = useAuth();
@@ -37,6 +40,8 @@ export default function EpisodeProcessingPage() {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [transcript, setTranscript] = useState<Transcript | null>(null);
   const [transcriptWords, setTranscriptWords] = useState<TranscriptWord[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [socialClips, setSocialClips] = useState<SocialClip[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -48,6 +53,12 @@ export default function EpisodeProcessingPage() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
+  const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
+  const [isGeneratingClips, setIsGeneratingClips] = useState(false);
+  const [currentPreviewClip, setCurrentPreviewClip] = useState<string | null>(null);
+  const [previewEndTime, setPreviewEndTime] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState('transcript');
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hoveredWordIndex, setHoveredWordIndex] = useState<number | null>(null);
@@ -83,16 +94,31 @@ export default function EpisodeProcessingPage() {
         setCurrentWordIndex(index);
       }
     }
-  }, [currentTime, transcriptWords]);
+
+    // Handle clip preview end time
+    if (previewEndTime && currentTime >= previewEndTime) {
+      setIsPlaying(false);
+      setCurrentPreviewClip(null);
+      setPreviewEndTime(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  }, [currentTime, transcriptWords, previewEndTime]);
 
   const fetchEpisodeData = async () => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
     try {
       // Fetch episode data with proper user verification
       const { data: episodeData, error: episodeError } = await supabase
         .from('episodes')
         .select('*')
         .eq('id', episodeId)
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single();
 
       if (episodeError) throw episodeError;
@@ -106,7 +132,16 @@ export default function EpisodeProcessingPage() {
         .single();
 
       if (!transcriptError && transcriptData) {
-        setTranscript(transcriptData);
+        // Convert null values to undefined for TypeScript compatibility
+        const processedTranscript: Transcript = {
+          ...transcriptData,
+          full_text: transcriptData.full_text ?? undefined,
+          confidence: transcriptData.confidence ?? undefined,
+          status: transcriptData.status as 'processing' | 'completed' | 'failed',
+          created_at: transcriptData.created_at || new Date().toISOString(),
+          updated_at: transcriptData.updated_at || new Date().toISOString(),
+        };
+        setTranscript(processedTranscript);
         
         // Fetch transcript words if transcript is completed
         if (transcriptData.status === 'completed') {
@@ -117,9 +152,43 @@ export default function EpisodeProcessingPage() {
             .order('word_index');
 
           if (!wordsError && wordsData) {
-            setTranscriptWords(wordsData);
+            // Convert null values to undefined for TypeScript compatibility
+            const processedWords: TranscriptWord[] = wordsData.map(word => ({
+              id: word.id,
+              transcript_id: word.transcript_id,
+              word: word.word,
+              start_time: word.start_time,
+              end_time: word.end_time,
+              confidence: word.confidence ?? undefined,
+              speaker: word.speaker ?? undefined,
+              word_index: word.word_index,
+              created_at: word.created_at || new Date().toISOString(),
+            }));
+            setTranscriptWords(processedWords);
           }
         }
+      }
+
+      // Fetch chapters
+      const { data: chaptersData, error: chaptersError } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('episode_id', episodeId)
+        .order('chapter_index');
+
+      if (!chaptersError && chaptersData) {
+        setChapters(chaptersData);
+      }
+
+      // Fetch social clips
+      const { data: clipsData, error: clipsError } = await supabase
+        .from('social_clips')
+        .select('*')
+        .eq('episode_id', episodeId)
+        .order('engagement_score', { ascending: false });
+
+      if (!clipsError && clipsData) {
+        setSocialClips(clipsData);
       }
     } catch (error) {
       console.error('Error fetching episode data:', error);
@@ -272,6 +341,122 @@ export default function EpisodeProcessingPage() {
     return speakers;
   };
 
+  const generateChapters = async () => {
+    if (!episode || !session) return;
+    
+    setIsGeneratingChapters(true);
+    try {
+      const response = await fetch('/api/analyze/chapters', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ episodeId: episode.id })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate chapters');
+      }
+
+      const result = await response.json();
+      
+      // Refresh data to get updated chapters
+      await fetchEpisodeData();
+    } catch (error) {
+      console.error('Error generating chapters:', error);
+      alert(error instanceof Error ? error.message : 'Failed to generate chapters');
+    } finally {
+      setIsGeneratingChapters(false);
+    }
+  };
+
+  const generateSocialClips = async (generateMore = false) => {
+    if (!episode || !session) return;
+    
+    setIsGeneratingClips(true);
+    try {
+      const response = await fetch('/api/analyze/clips', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          episodeId: episode.id,
+          generateMore 
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate social clips');
+      }
+
+      const result = await response.json();
+      
+      // Refresh data to get updated clips
+      await fetchEpisodeData();
+    } catch (error) {
+      console.error('Error generating social clips:', error);
+      alert(error instanceof Error ? error.message : 'Failed to generate social clips');
+    } finally {
+      setIsGeneratingClips(false);
+    }
+  };
+
+  const handlePreviewClip = (startTime: number, endTime: number) => {
+    if (!audioRef.current) return;
+    
+    // If currently playing the same clip, pause it
+    if (currentPreviewClip && isPlaying && currentTime >= startTime && currentTime <= endTime) {
+      setIsPlaying(false);
+      setCurrentPreviewClip(null);
+      setPreviewEndTime(null);
+      audioRef.current.pause();
+      return;
+    }
+    
+    // Start playing the clip
+    audioRef.current.currentTime = startTime;
+    setCurrentPreviewClip(socialClips.find(clip => clip.start_time === startTime)?.id || null);
+    setPreviewEndTime(endTime);
+    audioRef.current.play();
+    setIsPlaying(true);
+  };
+
+  const handleDownloadClip = async (clipId: string, title: string) => {
+    if (!session) return;
+    
+    try {
+      const response = await fetch(`/api/clips/${clipId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download clip');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading clip:', error);
+      alert('Failed to download clip');
+    }
+  };
+
   const handleDeleteEpisode = async () => {
     if (!episode) return;
     
@@ -363,7 +548,7 @@ export default function EpisodeProcessingPage() {
               <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
-                  <span>{new Date(episode.created_at).toLocaleDateString()}</span>
+                  <span>{episode.created_at ? new Date(episode.created_at).toLocaleDateString() : 'Unknown date'}</span>
                 </div>
                 {episode.duration && (
                   <div className="flex items-center space-x-1">
@@ -406,8 +591,9 @@ export default function EpisodeProcessingPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Modern Audio Player */}
-          <div className="xl:col-span-1">
+          {/* Left Column - Audio Player & Chapters */}
+          <div className="xl:col-span-1 space-y-6">
+            {/* Modern Audio Player */}
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
               <CardContent className="p-8">
                                  {/* Audio Element */}
@@ -558,14 +744,23 @@ export default function EpisodeProcessingPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Chapters Section */}
+            <ChaptersSection
+              chapters={chapters}
+              currentTime={currentTime}
+              onSeek={jumpToTime}
+              onGenerateChapters={generateChapters}
+              isGenerating={isGeneratingChapters}
+            />
           </div>
 
-          {/* Enhanced Transcript */}
+          {/* Right Column - Transcript & Social Clips */}
           <div className="xl:col-span-2">
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Interactive Transcript</span>
+                  <span>Content Analysis</span>
                   {transcript && transcript.confidence && (
                     <Badge variant="outline" className="text-xs">
                       {Math.round(transcript.confidence * 100)}% confidence
@@ -573,7 +768,14 @@ export default function EpisodeProcessingPage() {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mx-6 mt-6 mb-0">
+                    <TabsTrigger value="transcript">Transcript</TabsTrigger>
+                    <TabsTrigger value="clips">Social Clips</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="transcript" className="p-6 pt-4">
                 {!transcript ? (
                   <div className="flex items-center justify-center py-16">
                     <div className="text-center">
@@ -677,6 +879,23 @@ export default function EpisodeProcessingPage() {
                      </div>
                   </div>
                 )}
+                  </TabsContent>
+                  
+                  <TabsContent value="clips" className="p-6 pt-4">
+                    <SocialClipsTab
+                      clips={socialClips}
+                      transcriptWords={transcriptWords}
+                      onPreview={handlePreviewClip}
+                      onDownload={handleDownloadClip}
+                      onGenerateClips={() => generateSocialClips(false)}
+                      onGenerateMoreClips={() => generateSocialClips(true)}
+                      isGenerating={isGeneratingClips}
+                      isPlaying={isPlaying}
+                      currentTime={currentTime}
+                      currentPreviewClip={currentPreviewClip}
+                    />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>

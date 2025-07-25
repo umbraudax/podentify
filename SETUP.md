@@ -24,6 +24,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # AssemblyAI Configuration (Required for transcription)
 ASSEMBLYAI_API_KEY=your_assemblyai_api_key
 
+# Gemini AI Configuration (Required for chapters and social clips)
+GEMINI_API_KEY=your_gemini_api_key
+
 # Application Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
@@ -54,7 +57,13 @@ STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 2. Go to your dashboard and find your API key
 3. Copy the API key → `ASSEMBLYAI_API_KEY`
 
-### 3. Database Migration
+### 3. Gemini AI Setup
+
+1. Go to [Google AI Studio](https://aistudio.google.com/)
+2. Create a new API key or use an existing one
+3. Copy the API key → `GEMINI_API_KEY`
+
+### 4. Database Migration
 
 The database tables have already been created with the migration. If you need to apply it manually:
 
@@ -62,13 +71,13 @@ The database tables have already been created with the migration. If you need to
 npx supabase db push --include-all
 ```
 
-### 4. Install Dependencies
+### 5. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 5. Start Development Server
+### 6. Start Development Server
 
 ```bash
 npm run dev

@@ -11,6 +11,7 @@ export function usePreferences() {
   const [useLocalStorage, setUseLocalStorage] = useState(false);
 
   useEffect(() => {
+    console.log('usePreferences: user state changed:', user ? `User ID: ${user.id}` : 'No user');
     if (user) {
       fetchPreferences();
     } else {
@@ -21,12 +22,12 @@ export function usePreferences() {
 
   const loadFromLocalStorage = () => {
     try {
-      const darkMode = localStorage.getItem('darkMode') === 'true';
+      // For unauthenticated users, ALWAYS default to light mode
       const emailNotifications = localStorage.getItem('emailNotifications') !== 'false'; // default to true
       
       setPreferences({
         user_id: 'local',
-        dark_mode: darkMode,
+        dark_mode: false, // Always light mode for unauthenticated users
         email_notifications: emailNotifications,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -62,8 +63,14 @@ export function usePreferences() {
         .single();
 
       if (error) {
-        // If table doesn't exist or no preferences exist, fall back to localStorage
-        if (error.code === 'PGRST116' || error.code === '42P01') {
+        // If no preferences exist for this user, create default ones
+        if (error.code === 'PGRST116') {
+          console.log('No preferences found for user, creating default preference');
+          await createDefaultPreferences();
+          return;
+        }
+        // If table doesn't exist, fall back to localStorage  
+        else if (error.code === '42P01') {
           console.log('Database table not available, using localStorage fallback');
           setUseLocalStorage(true);
           loadFromLocalStorage();
@@ -72,8 +79,24 @@ export function usePreferences() {
           throw error;
         }
       } else {
-        setPreferences(data);
+        // Convert database null values to match TypeScript interface
+        const processedPreferences: UserPreferences = {
+          user_id: data.user_id,
+          dark_mode: data.dark_mode ?? false,
+          email_notifications: data.email_notifications ?? true,
+          created_at: data.created_at || new Date().toISOString(),
+          updated_at: data.updated_at || new Date().toISOString(),
+        };
+        console.log('Loaded preferences from database:', processedPreferences);
+        setPreferences(processedPreferences);
         setUseLocalStorage(false);
+        
+        // Apply the theme immediately when preferences are loaded
+        if (processedPreferences.dark_mode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
     } catch (err) {
       console.error('Error fetching preferences:', err);
@@ -96,6 +119,8 @@ export function usePreferences() {
         email_notifications: true,
       };
 
+      console.log('Creating default preferences for user:', user.id, defaultPrefs);
+
       const { data, error } = await supabase
         .from('user_preferences')
         .insert(defaultPrefs)
@@ -103,7 +128,23 @@ export function usePreferences() {
         .single();
 
       if (error) throw error;
-      setPreferences(data);
+      // Convert database null values to match TypeScript interface
+      const processedPreferences: UserPreferences = {
+        user_id: data.user_id,
+        dark_mode: data.dark_mode ?? false,
+        email_notifications: data.email_notifications ?? true,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString(),
+      };
+      console.log('Created default preferences:', processedPreferences);
+      setPreferences(processedPreferences);
+      
+      // Apply the theme immediately when preferences are created
+      if (processedPreferences.dark_mode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     } catch (err) {
       console.error('Error creating default preferences:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -144,8 +185,16 @@ export function usePreferences() {
         return { data: newPrefs, error: null };
       }
       
-      setPreferences(data);
-      return { data, error: null };
+      // Convert database null values to match TypeScript interface
+      const processedPreferences: UserPreferences = {
+        user_id: data.user_id,
+        dark_mode: data.dark_mode ?? false,
+        email_notifications: data.email_notifications ?? true,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString(),
+      };
+      setPreferences(processedPreferences);
+      return { data: processedPreferences, error: null };
     } catch (err) {
       console.error('Error updating preferences:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -176,9 +225,11 @@ export function usePreferences() {
     }
 
     // Then update storage (database or localStorage)
+    console.log('Saving dark mode preference:', newDarkMode, 'for user:', user?.id);
     const result = await updatePreferences({
       dark_mode: newDarkMode,
     });
+    console.log('Save result:', result);
 
     // If update failed, revert the UI state (though with localStorage fallback this shouldn't happen)
     if (result?.error) {
@@ -213,6 +264,8 @@ export function usePreferences() {
 
     return result;
   };
+
+// resetToLightMode function removed to avoid circular dependency with useAuth
 
   return {
     preferences,
