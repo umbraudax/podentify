@@ -40,14 +40,14 @@ export default function ProblemSolutionSection() {
   ];
 
   return (
-    <section id="features" className="py-24 bg-white">
+    <section id="features" className="py-24 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4">
         {/* Problem Section */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl lg:text-5xl font-bold text-text-primary mb-6">
             Tired of Tedious Transcription & Manual Snipping?
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
             Creating quality podcast content is challenging enough without spending hours on post-production tasks.
           </p>
         </div>
@@ -55,12 +55,12 @@ export default function ProblemSolutionSection() {
         <div className="grid md:grid-cols-3 gap-8 mb-24">
           {problems.map((problem, index) => (
             <div key={index} className="group">
-              <div className="bg-red-50 rounded-2xl p-8 border border-red-100 group-hover:border-red-200 transition-all duration-300 h-full">
-                <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-red-200 transition-colors">
-                  <problem.icon className="w-7 h-7 text-red-600" />
+              <div className="bg-error/5 rounded-2xl p-8 border border-error/10 group-hover:border-error/20 transition-all duration-300 h-full">
+                <div className="w-14 h-14 bg-error/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-error/20 transition-colors">
+                  <problem.icon className="w-7 h-7 text-error" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{problem.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{problem.description}</p>
+                <h3 className="text-xl font-bold text-text-primary mb-4">{problem.title}</h3>
+                <p className="text-text-secondary leading-relaxed">{problem.description}</p>
               </div>
             </div>
           ))}
@@ -69,9 +69,9 @@ export default function ProblemSolutionSection() {
         {/* Solution Section */}
         <div className="text-center mb-20">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            <span className="gradient-text">Podtentify:</span> Your AI-Powered Content Co-Pilot
+                          <span className="gradient-text">Podentify:</span> Your AI-Powered Content Co-Pilot
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
             Transform your podcast workflow with intelligent automation that turns hours of work into minutes of review.
           </p>
         </div>

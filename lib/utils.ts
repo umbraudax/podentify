@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { SUPPORTED_AUDIO_FORMATS, MAX_FILE_SIZE } from './constants';
+import { SUPPORTED_AUDIO_FORMATS, SUPPORTED_VIDEO_FORMATS, SUPPORTED_MEDIA_FORMATS, MAX_FILE_SIZE, MEDIA_TYPES, MediaType } from './constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,6 +33,61 @@ export function formatDuration(seconds: number): string {
 export function isValidAudioFile(file: File): boolean {
   const extension = file.name.split('.').pop()?.toLowerCase();
   return extension ? SUPPORTED_AUDIO_FORMATS.includes(extension) : false;
+}
+
+/**
+ * Validates if a file is a supported video format
+ */
+export function isValidVideoFile(file: File): boolean {
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension ? SUPPORTED_VIDEO_FORMATS.includes(extension) : false;
+}
+
+/**
+ * Validates if a file is a supported media format (audio or video)
+ */
+export function isValidMediaFile(file: File): boolean {
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension ? SUPPORTED_MEDIA_FORMATS.includes(extension) : false;
+}
+
+/**
+ * Determines the media type of a file (audio or video)
+ */
+export function getMediaType(file: File): MediaType | null {
+  if (isValidAudioFile(file)) return MEDIA_TYPES.AUDIO;
+  if (isValidVideoFile(file)) return MEDIA_TYPES.VIDEO;
+  return null;
+}
+
+/**
+ * Gets the appropriate MIME type for a file extension
+ */
+export function getMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  
+  // Audio MIME types
+  const audioMimeTypes: { [key: string]: string } = {
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'm4a': 'audio/mp4'
+  };
+  
+  // Video MIME types
+  const videoMimeTypes: { [key: string]: string } = {
+    'mp4': 'video/mp4',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'webm': 'video/webm'
+  };
+  
+  if (ext) {
+    if (audioMimeTypes[ext]) return audioMimeTypes[ext];
+    if (videoMimeTypes[ext]) return videoMimeTypes[ext];
+  }
+  
+  return 'application/octet-stream';
 }
 
 /**

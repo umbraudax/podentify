@@ -2,140 +2,130 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useCredits } from '@/hooks/useCredits';
+import { CheckCircle, Loader2, Mic } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SuccessPage() {
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { refresh: refreshSubscription } = useSubscription();
+  const { refresh: refreshCredits } = useCredits();
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(true);
+  const [refreshComplete, setRefreshComplete] = useState(false);
 
   useEffect(() => {
-    // Simulate a brief loading period to allow webhook processing
-    const timer = setTimeout(async () => {
-      // Refresh subscription status after checkout
-      if (refreshSubscription) {
-        await refreshSubscription();
-      }
-      setLoading(false);
-    }, 3000); // Give webhooks more time to process
-
-    return () => clearTimeout(timer);
-  }, [refreshSubscription]);
-
-  useEffect(() => {
-    if (!user && !loading) {
+    if (!authLoading && !user) {
       router.push('/');
+      return;
     }
-  }, [user, loading, router]);
 
-  if (loading) {
+    if (user && !refreshComplete) {
+      // Refresh subscription and credits data after successful payment
+      const refreshData = async () => {
+        try {
+          setRefreshing(true);
+          
+          // Wait a moment to ensure webhooks have processed
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Refresh both subscription and credits data
+          await Promise.all([
+            refreshSubscription(),
+            refreshCredits()
+          ]);
+          
+          setRefreshComplete(true);
+          
+          // Auto-redirect to dashboard after a moment
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 3000);
+          
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+          setRefreshComplete(true);
+        } finally {
+          setRefreshing(false);
+        }
+      };
+
+      refreshData();
+    }
+  }, [user, authLoading, router, refreshSubscription, refreshCredits, refreshComplete]);
+
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
-            <CheckCircle className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900">Processing your subscription...</h2>
-          <p className="text-gray-600">This will just take a moment.</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
-      <div className="max-w-2xl mx-auto text-center">
-        <Card className="shadow-2xl border-0 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-12">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+      <div className="max-w-md w-full mx-4">
+        <Card className="bg-surface-primary border-border text-center">
+          <CardHeader className="pb-4">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mb-4">
+              <Mic className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold mb-4">
-              Welcome to Podtentify Pro!
+            <CardTitle className="text-2xl font-bold text-text-primary">
+              Payment Successful!
             </CardTitle>
-            <p className="text-green-100 text-lg">
-              Your subscription is now active and ready to use.
-            </p>
           </CardHeader>
-          
-          <CardContent className="py-12 space-y-8">
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-gray-900">
-                🎉 You&apos;re all set! Here&apos;s what you get:
-              </h3>
-              
-              <div className="grid md:grid-cols-2 gap-4 text-left">
-                <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
-                  <span className="font-medium text-gray-900">Unlimited episodes</span>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg">
-                  <Sparkles className="w-6 h-6 text-purple-600" />
-                  <span className="font-medium text-gray-900">AI show notes</span>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg">
-                  <Sparkles className="w-6 h-6 text-green-600" />
-                  <span className="font-medium text-gray-900">Social media clips</span>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-orange-50 rounded-lg">
-                  <Sparkles className="w-6 h-6 text-orange-600" />
-                  <span className="font-medium text-gray-900">Priority processing</span>
-                </div>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-center space-x-2">
+              <CheckCircle className="w-6 h-6 text-green-500" />
+              <p className="text-text-secondary">
+                Your subscription has been activated
+              </p>
+            </div>
+
+            {refreshing && (
+              <div className="flex items-center justify-center space-x-2 py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-brand-primary" />
+                <p className="text-sm text-text-secondary">
+                  Setting up your account...
+                </p>
               </div>
-            </div>
+            )}
 
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-bold text-gray-900 mb-3">Next Steps:</h4>
-              <ol className="text-left space-y-2 text-gray-700">
-                <li className="flex items-center space-x-2">
-                  <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
-                  <span>Upload your first episode to the dashboard</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
-                  <span>Let our AI generate your show notes and clips</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                  <span>Download and share your content</span>
-                </li>
-              </ol>
-            </div>
+            {refreshComplete && (
+              <div className="space-y-4">
+                <p className="text-sm text-text-secondary">
+                  Your subscription and credits have been updated!
+                </p>
+                <p className="text-xs text-text-tertiary">
+                  Redirecting to dashboard in a moment...
+                </p>
+              </div>
+            )}
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="space-y-3">
               <Button 
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 px-8"
+                className="w-full bg-brand-primary hover:bg-brand-primary/90"
                 onClick={() => router.push('/dashboard')}
+                disabled={refreshing}
               >
                 Go to Dashboard
-                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
+              
               <Button 
-                variant="outline"
-                size="lg"
-                className="px-8"
-                onClick={() => router.push('/')}
+                variant="outline" 
+                className="w-full border-border text-text-primary"
+                onClick={() => router.push('/account/settings')}
+                disabled={refreshing}
               >
-                Back to Home
+                View Subscription Details
               </Button>
             </div>
 
-            <div className="text-sm text-gray-500">
-              Need help getting started? Check out our{' '}
-              <a href="#help" className="text-blue-600 hover:text-blue-700 font-medium">
-                quick start guide
-              </a>{' '}
-              or{' '}
-              <a href="#contact" className="text-blue-600 hover:text-blue-700 font-medium">
-                contact support
-              </a>
-              .
+            <div className="text-xs text-text-tertiary">
+              <p>Questions? Contact our support team.</p>
             </div>
           </CardContent>
         </Card>

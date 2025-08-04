@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
-import { isValidAudioFile, isValidFileSize } from '@/lib/utils';
+import { isValidMediaFile, getMediaType, isValidFileSize } from '@/lib/utils';
+import { MEDIA_TYPES } from '@/lib/constants';
+import { getUserCredits, hasEnoughCredits } from '@/lib/credit-service';
+import ffmpeg from 'fluent-ffmpeg';
 
 // Create a Supabase client with service role for server operations
 const supabaseAdmin = createClient(
@@ -28,6 +31,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check user credits before processing
+    const userCredits = await getUserCredits(user.id);
+    if (!userCredits || userCredits.current_credits <= 0) {
+      return NextResponse.json({ 
+        error: 'Insufficient credits. Please upgrade your plan or purchase additional credits.',
+        credits: userCredits?.current_credits || 0
+      }, { status: 402 }); // Payment Required
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const title = formData.get('title') as string;
@@ -38,12 +50,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type and size
-    if (!isValidAudioFile(file)) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+    if (!isValidMediaFile(file)) {
+      return NextResponse.json({ error: 'Invalid file type. Supported formats: mp3, wav, m4a, mp4, mov, avi, mkv, webm' }, { status: 400 });
+    }
+
+    // Determine media type
+    const mediaType = getMediaType(file);
+    if (!mediaType) {
+      return NextResponse.json({ error: 'Unable to determine media type' }, { status: 400 });
     }
 
     if (!isValidFileSize(file)) {
       return NextResponse.json({ error: 'File too large' }, { status: 400 });
+    }
+
+    // Estimate duration based on file size (rough approximation)
+    // For MP3: ~1MB per minute at 128kbps, but this varies greatly
+    // We'll do a conservative check here and proper deduction later
+    const fileSizeMB = file.size / (1024 * 1024);
+    const estimatedMinutes = Math.ceil(fileSizeMB * 2); // Conservative estimate - 2 minutes per MB
+
+    // Check if user has enough credits for estimated duration
+    if (!await hasEnoughCredits(user.id, estimatedMinutes)) {
+      return NextResponse.json({ 
+        error: `Insufficient credits. This file is estimated to need ${estimatedMinutes} credits. You have ${userCredits.current_credits} credits available.`,
+        required_credits: estimatedMinutes,
+        available_credits: userCredits.current_credits
+      }, { status: 402 });
     }
 
     // Create uploads directory if it doesn't exist
@@ -93,7 +126,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         title: title || file.name.replace(extension, ''),
         description: description || null,
-        audio_url: `/api/audio/${user.id}/${filename}`,
+        audio_url: mediaType === MEDIA_TYPES.VIDEO ? `/api/video/${user.id}/${filename}` : `/api/audio/${user.id}/${filename}`,
+        media_type: mediaType,
         status: 'uploading'
       })
       .select()
@@ -107,12 +141,14 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Start transcription process (we'll create this function next)
-    startTranscriptionProcess(episode.id, filepath);
+    // Start transcription process
+    startTranscriptionProcess(episode.id, filepath, user.id, mediaType);
 
     return NextResponse.json({ 
       message: 'File uploaded successfully',
-      episode: episode
+      episode: episode,
+      estimated_credits: estimatedMinutes,
+      remaining_credits: userCredits.current_credits
     });
 
   } catch (error) {
@@ -121,7 +157,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function startTranscriptionProcess(episodeId: string, filePath: string) {
+async function startTranscriptionProcess(episodeId: string, filePath: string, userId: string, mediaType: string) {
   try {
     // Update episode status to processing
     await supabaseAdmin
@@ -139,9 +175,12 @@ async function startTranscriptionProcess(episodeId: string, filePath: string) {
       .select()
       .single();
 
-    // Call AssemblyAI API (we'll implement this next)
+    // Call AssemblyAI API - don't await to allow the upload response to return immediately
     if (transcript) {
-      processTranscriptWithAssemblyAI(transcript.id, filePath);
+      // Use Promise to handle the async call without blocking the upload response
+      processTranscriptWithAssemblyAI(transcript.id, filePath, userId, mediaType).catch(error => {
+        console.error('Background transcription failed:', error);
+      });
     }
 
   } catch (error) {
@@ -155,27 +194,72 @@ async function startTranscriptionProcess(episodeId: string, filePath: string) {
   }
 }
 
-async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: string) {
+async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: string, userId: string, mediaType: string) {
+  let audioFilePath = filePath;
+  let shouldCleanup = false;
+
   try {
+    // If it's a video file, extract audio for transcription
+    if (mediaType === MEDIA_TYPES.VIDEO) {
+      const audioExtractPath = filePath.replace(path.extname(filePath), '_audio.wav');
+      
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg(filePath)
+          .output(audioExtractPath)
+          .audioCodec('pcm_s16le') // Uncompressed WAV for best transcription quality
+          .format('wav')
+          .on('end', () => resolve())
+          .on('error', (err) => reject(err))
+          .run();
+      });
+
+      audioFilePath = audioExtractPath;
+      shouldCleanup = true;
+      console.log(`Audio extracted from video: ${audioExtractPath}`);
+    }
+  } catch (error) {
+    console.error('Error extracting audio from video:', error);
+    throw error;
+  }
+  try {
+    // Ensure we have the required environment variable
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set');
+    }
+
     // Call the transcription API in the background
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/transcribe`, {
+    const response = await fetch(`${appUrl}/api/transcribe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         transcriptId,
-        filePath
+        filePath: audioFilePath,
+        userId,
+        shouldCleanup
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Transcription API call failed: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Transcription API call failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     console.log(`Successfully started transcription for transcript ${transcriptId}`);
   } catch (error) {
     console.error('Error calling transcription API:', error);
+    
+    // Clean up extracted audio file if there was an error
+    if (shouldCleanup && audioFilePath !== filePath) {
+      try {
+        await unlink(audioFilePath);
+        console.log(`Cleaned up extracted audio file: ${audioFilePath}`);
+      } catch (cleanupError) {
+        console.error('Error cleaning up extracted audio:', cleanupError);
+      }
+    }
     
     // Update transcript status to failed
     await supabaseAdmin
@@ -185,5 +269,22 @@ async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: s
         updated_at: new Date().toISOString()
       })
       .eq('id', transcriptId);
+
+    // Also update episode status to failed
+    const { data: transcript } = await supabaseAdmin
+      .from('transcripts')
+      .select('episode_id')
+      .eq('id', transcriptId)
+      .single();
+
+    if (transcript) {
+      await supabaseAdmin
+        .from('episodes')
+        .update({ 
+          status: 'failed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transcript.episode_id);
+    }
   }
 } 

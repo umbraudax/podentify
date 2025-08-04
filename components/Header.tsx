@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Mic, Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { getUserDisplayName } from '@/lib/utils';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +21,7 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const { user, loading, signOut } = useAuth();
+  const { getSubscriptionPlan } = useSubscription();
   const router = useRouter();
 
   useEffect(() => {
@@ -59,22 +62,35 @@ export default function Header() {
   };
 
   const userDisplayName = getUserDisplayName(user);
+  const planName = getSubscriptionPlan();
+
+  // Helper function for plan-specific badge colors (matching pricing section colors)
+  const getPlanBadgeColors = (plan: string) => {
+    switch (plan) {
+      case 'Ultra':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
+      case 'Pro':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+      default: // Basic/Free
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+    }
+  };
 
   return (
     <div>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-gray-700' 
+          ? 'bg-surface-primary/95 backdrop-blur-md shadow-lg border-b border-border' 
           : 'bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
                 <Mic className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">Podtentify</span>
+              <span className="text-2xl font-bold text-text-primary">Podentify</span>
             </div>
 
             {/* Desktop Navigation */}
@@ -83,10 +99,10 @@ export default function Header() {
                 <button
                   key={item.name}
                   onClick={() => scrollToSection(item.href)}
-                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors duration-200 relative group"
+                  className="text-text-secondary hover:text-brand-primary font-medium transition-colors duration-200 relative group"
                 >
                   {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 dark:bg-blue-400 transition-all duration-200 group-hover:w-full"></span>
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand-primary transition-all duration-200 group-hover:w-full"></span>
                 </button>
               ))}
             </nav>
@@ -94,18 +110,26 @@ export default function Header() {
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               {loading ? (
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-surface-secondary">
+                      <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">{userDisplayName}</span>
+                      <span className="text-text-primary font-medium">{userDisplayName}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-2 border-b border-border">
+                      <p className="text-sm font-medium text-text-primary">{userDisplayName}</p>
+                      <div className="flex items-center mt-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeColors(planName)}`}>
+                          {planName}
+                        </span>
+                      </div>
+                    </div>
                     <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                       <Mic className="mr-2 h-4 w-4" />
                       Dashboard
@@ -125,13 +149,13 @@ export default function Header() {
                 <>
                   <Button 
                     variant="ghost" 
-                    className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+                    className="text-text-primary hover:text-brand-primary font-medium"
                     onClick={() => router.push('/auth/signin')}
                   >
                     Sign In
                   </Button>
                   <Button 
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    className="bg-brand-primary hover:bg-brand-primary/90 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                     onClick={() => router.push('/auth/signup')}
                   >
                     Sign Up Free
@@ -143,12 +167,12 @@ export default function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="md:hidden p-2 rounded-lg hover:bg-surface-secondary transition-colors"
             >
               {isMobileMenuOpen ? (
-                <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                <X className="w-6 h-6 text-text-primary" />
               ) : (
-                <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                <Menu className="w-6 h-6 text-text-primary" />
               )}
             </button>
           </div>
@@ -158,28 +182,33 @@ export default function Header() {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="fixed inset-0 bg-black/20 dark:bg-black/40" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className="fixed top-0 right-0 w-full max-w-sm h-full bg-white dark:bg-gray-900 shadow-xl">
+          <div className="fixed inset-0 bg-overlay" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="fixed top-0 right-0 w-full max-w-sm h-full bg-surface-primary shadow-xl border-l border-border">
             <div className="px-4 py-6 space-y-4">
               {navigationItems.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => scrollToSection(item.href)}
-                  className="block w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-all duration-200"
+                  className="block w-full text-left px-4 py-3 text-text-primary hover:text-brand-primary hover:bg-brand-tertiary rounded-lg font-medium transition-all duration-200"
                 >
                   {item.name}
                 </button>
               ))}
               
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="pt-4 border-t border-border space-y-3">
                 {user ? (
                   <>
-                    <div className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
-                      {userDisplayName}
+                    <div className="px-4 py-2 border-b border-border">
+                      <p className="text-sm font-medium text-text-primary">{userDisplayName}</p>
+                      <div className="flex items-center mt-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeColors(planName)}`}>
+                          {planName}
+                        </span>
+                      </div>
                     </div>
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+                      className="w-full justify-start text-text-primary hover:text-brand-primary font-medium"
                       onClick={() => {
                         router.push('/dashboard');
                         setIsMobileMenuOpen(false);
@@ -190,7 +219,7 @@ export default function Header() {
                     </Button>
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+                      className="w-full justify-start text-text-primary hover:text-brand-primary font-medium"
                       onClick={() => {
                         router.push('/account/settings');
                         setIsMobileMenuOpen(false);
@@ -201,7 +230,7 @@ export default function Header() {
                     </Button>
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+                      className="w-full justify-start text-text-primary hover:text-brand-primary font-medium"
                       onClick={() => {
                         handleSignOut();
                         setIsMobileMenuOpen(false);
@@ -215,7 +244,7 @@ export default function Header() {
                   <>
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+                      className="w-full justify-start text-text-primary hover:text-brand-primary font-medium"
                       onClick={() => {
                         router.push('/auth/signin');
                         setIsMobileMenuOpen(false);
@@ -224,7 +253,7 @@ export default function Header() {
                       Sign In
                     </Button>
                     <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold"
+                      className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
                       onClick={() => {
                         router.push('/auth/signup');
                         setIsMobileMenuOpen(false);

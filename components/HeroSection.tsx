@@ -27,33 +27,33 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="hero-gradient dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex items-center justify-center px-4 py-20 pt-32">
+      <section className="bg-surface-primary min-h-screen flex items-center justify-center px-4 py-20 pt-32">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-6">
               <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-                <span className="gradient-text">Podtentify:</span>
+                <span className="gradient-text">Podentify:</span>
                 <br />
-                <span className="text-gray-900 dark:text-gray-100">Your Podcast Content,</span>
+                <span className="text-text-primary">Your Podcast Content,</span>
                 <br />
-                <span className="text-gray-900 dark:text-gray-100">Amplified.</span>
+                <span className="text-text-primary">Amplified.</span>
               </h1>
               
-              <h2 className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl">
-                Stop Transcribing. Start Amplifying. Podtentify Turns Your Audio into Instant Show Notes & Shareable Moments.
+              <h2 className="text-xl lg:text-2xl text-text-secondary font-medium max-w-2xl">
+                Stop Transcribing. Start Amplifying. Podentify Turns Your Audio into Instant Show Notes & Shareable Moments.
               </h2>
               
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
-                Leveraging AI, Podtentify automatically generates detailed show notes and extracts engaging, ready-to-share social media clips from your podcast episodes, saving you hours and boosting your reach.
+              <p className="text-lg text-text-secondary max-w-2xl leading-relaxed">
+                Leveraging AI, Podentify automatically generates detailed show notes and extracts engaging, ready-to-share social media clips from your podcast episodes, saving you hours and boosting your reach.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                 onClick={handleGetStarted}
               >
                 {user ? 'Go to Dashboard' : 'Get Started for Free'}
@@ -61,7 +61,7 @@ export default function HeroSection() {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-2 border-gray-300 dark:border-gray-600 hover:border-blue-600 dark:hover:border-blue-400 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300"
+                className="border-2 border-border hover:border-brand-primary text-text-primary hover:text-brand-primary px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Watch Demo
@@ -70,13 +70,13 @@ export default function HeroSection() {
 
             {/* Trust Indicators */}
             <div className="flex items-center space-x-6 pt-8">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Trusted by content creators</p>
+              <p className="text-sm text-text-tertiary">Trusted by content creators</p>
               <div className="flex items-center space-x-4">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-semibold"
+                      className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full border-2 border-surface-primary flex items-center justify-center text-white text-xs font-semibold"
                     >
                       {i}
                     </div>

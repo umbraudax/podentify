@@ -21,7 +21,7 @@ export default function CTASection() {
 
   return (
     <div>
-      <section className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+      <section id="demo" className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
@@ -49,7 +49,7 @@ export default function CTASection() {
             </h2>
             
             <p className="text-xl lg:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Join creators who are already amplifying their reach with Podtentify. Transform your podcast workflow today.
+              Join creators who are already amplifying their reach with Podentify. Transform your podcast workflow today.
             </p>
           </div>
 
@@ -84,6 +84,10 @@ export default function CTASection() {
               size="lg" 
               variant="outline"
               className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-10 py-4 text-xl font-bold rounded-2xl transition-all duration-300"
+              onClick={() => {
+                const element = document.getElementById('demo');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               Watch 2-Min Demo
             </Button>

@@ -33,7 +33,7 @@ export default function Footer() {
   const socialLinks = [
     { name: 'Twitter', icon: Twitter, href: '#twitter' },
     { name: 'LinkedIn', icon: Linkedin, href: '#linkedin' },
-    { name: 'Email', icon: Mail, href: 'mailto:hello@podtentify.com' }
+    { name: 'Email', icon: Mail, href: 'mailto:hello@podentify.com' }
   ];
 
   return (
@@ -44,10 +44,10 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
                 <Mic className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">Podtentify</span>
+              <span className="text-2xl font-bold text-white">Podentify</span>
             </div>
             
             <p className="text-gray-400 leading-relaxed max-w-md">
@@ -133,30 +133,12 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Newsletter Signup */}
-        <div className="border-t border-gray-800 pt-12 mb-12">
-          <div className="max-w-md">
-            <h3 className="text-white font-semibold mb-4">Stay updated</h3>
-            <p className="text-gray-400 mb-4">
-              Get the latest product updates, feature releases, and podcasting tips.
-            </p>
-            <div className="flex space-x-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-gray-400 text-sm">
-            © 2025 Podtentify. All rights reserved.
+            © 2025 Podentify. All rights reserved.
           </p>
           
           <div className="flex items-center space-x-6 text-sm text-gray-400">

@@ -47,30 +47,30 @@ export default function SocialSnippetsFeature() {
   ];
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Visual Demo */}
           <div className="relative order-2 lg:order-1">
-            <div className="bg-gray-50 rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div className="bg-surface-secondary rounded-2xl shadow-2xl border border-border overflow-hidden">
               {/* Header */}
-              <div className="bg-white px-6 py-4 border-b border-gray-200">
+              <div className="bg-surface-primary px-6 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-gray-900">Social Media Clips</h3>
-                  <span className="text-sm text-gray-500">5 clips found</span>
+                  <h3 className="text-lg font-bold text-text-primary">Social Media Clips</h3>
+                  <span className="text-sm text-text-secondary">5 clips found</span>
                 </div>
               </div>
 
               {/* Content */}
               <div className="p-6 space-y-4">
                 {clips.map((clip, index) => (
-                  <div key={index} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={index} className="bg-surface-primary rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-gray-900">{clip.title}</h4>
+                      <h4 className="font-semibold text-text-primary">{clip.title}</h4>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        clip.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                        clip.color === 'purple' ? 'bg-purple-100 text-purple-800' :
-                        'bg-green-100 text-green-800'
+                        clip.color === 'blue' ? 'bg-brand-tertiary text-brand-primary' :
+                        clip.color === 'purple' ? 'bg-brand-secondary/10 text-brand-secondary' :
+                        'bg-success/10 text-success'
                       }`}>
                         {clip.engagement}
                       </span>
@@ -78,16 +78,16 @@ export default function SocialSnippetsFeature() {
                     
                     {/* Waveform Visualization */}
                     <div className="mb-4">
-                      <div className="flex items-center space-x-1 h-12 bg-gray-100 rounded-lg p-2">
+                      <div className="flex items-center space-x-1 h-12 bg-surface-secondary rounded-lg p-2">
                         {Array.from({ length: 40 }).map((_, i) => (
                           <div 
                             key={i} 
                             className={`w-1 rounded-full transition-all duration-300 ${
                               i >= 8 && i <= 25 ? 
-                                clip.color === 'blue' ? 'bg-blue-500' :
-                                clip.color === 'purple' ? 'bg-purple-500' :
-                                'bg-green-500'
-                              : 'bg-gray-300'
+                                clip.color === 'blue' ? 'bg-brand-primary' :
+                                clip.color === 'purple' ? 'bg-brand-secondary' :
+                                'bg-success'
+                              : 'bg-text-tertiary'
                             }`}
                             style={{ 
                               height: `${Math.random() * 32 + 8}px`,
@@ -145,7 +145,7 @@ export default function SocialSnippetsFeature() {
               </h2>
               
               <p className="text-xl text-gray-600 leading-relaxed">
-                Never miss a viral moment. Podtentify&apos;s AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
+                Never miss a viral moment. Podentify&apos;s AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
               </p>
             </div>
 

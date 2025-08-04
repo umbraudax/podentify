@@ -220,7 +220,9 @@ export function usePreferences() {
     // Apply theme immediately
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
     } else {
+      document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
     }
 
@@ -236,7 +238,9 @@ export function usePreferences() {
       setPreferences(prev => prev ? { ...prev, dark_mode: !newDarkMode } : null);
       if (!newDarkMode) {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
+        document.documentElement.classList.add('light');
         document.documentElement.classList.remove('dark');
       }
     }

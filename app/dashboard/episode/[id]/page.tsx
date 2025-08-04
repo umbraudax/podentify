@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useCredits } from '@/hooks/useCredits';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,16 +25,32 @@ import {
   Waves,
   Clock,
   Users,
-  Trash2
+  Trash2,
+  AlertCircle,
+  Mic,
+  User,
+  LogOut,
+  Settings,
+  Coins
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Episode, Transcript, TranscriptWord, Chapter, SocialClip } from '@/lib/types';
 import ChaptersSection from '@/components/dashboard/ChaptersSection';
-import SocialClipsTab from '@/components/dashboard/SocialClipsTab';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SocialClipsSection from '@/components/dashboard/SocialClipsSection';
+import { MediaPlayer, MediaPlayerRef } from '@/components/MediaPlayer';
+import { getUserDisplayName } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function EpisodeProcessingPage() {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
+  const { getSubscriptionPlan } = useSubscription();
+  const { credits, loading: creditsLoading, getCreditStatus, refresh: refreshCredits } = useCredits();
   const router = useRouter();
   const params = useParams();
   const episodeId = params.id as string;
@@ -58,9 +76,10 @@ export default function EpisodeProcessingPage() {
   const [isGeneratingClips, setIsGeneratingClips] = useState(false);
   const [currentPreviewClip, setCurrentPreviewClip] = useState<string | null>(null);
   const [previewEndTime, setPreviewEndTime] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState('transcript');
+  const [fetchRetryCount, setFetchRetryCount] = useState(0);
+  const [lastFetchError, setLastFetchError] = useState<string | null>(null);
   
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const mediaPlayerRef = useRef<MediaPlayerRef>(null);
   const [hoveredWordIndex, setHoveredWordIndex] = useState<number | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState<number | null>(null);
 
@@ -69,16 +88,78 @@ export default function EpisodeProcessingPage() {
     ? `${episode.audio_url}?token=${session.access_token}`
     : episode?.audio_url;
 
+  // Check if transcript is ready for generating chapters/clips
+  const isTranscriptReady = transcript?.status === 'completed';
+
   useEffect(() => {
+    console.log('🔄 Initial useEffect triggered:', {
+      authLoading,
+      hasUser: !!user,
+      userId: user?.id,
+      episodeId,
+      currentTranscriptStatus: transcript?.status,
+      sessionPresent: !!session
+    });
+
     if (!authLoading && !user) {
+      console.log('❌ No user, redirecting to home');
       router.push('/');
       return;
     }
     
-    if (episodeId && user) {
+    if (episodeId && user && session) {
+      console.log('✅ Conditions met, fetching episode data');
+      setLastFetchError(null);
       fetchEpisodeData();
+    } else {
+      console.log('⏸️ Conditions not met for fetching:', { 
+        episodeId: !!episodeId, 
+        user: !!user, 
+        session: !!session,
+        authLoading 
+      });
     }
-  }, [episodeId, user, authLoading]);
+  }, [episodeId, user, authLoading, session]);
+
+  // Retry mechanism for failed fetches
+  useEffect(() => {
+    if (lastFetchError && fetchRetryCount < 3) {
+      console.log(`🔄 Retrying fetch due to error (attempt ${fetchRetryCount + 1}/3):`, lastFetchError);
+      const retryTimeout = setTimeout(() => {
+        setFetchRetryCount(prev => prev + 1);
+        fetchEpisodeData();
+      }, 2000 * (fetchRetryCount + 1)); // Exponential backoff
+
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [lastFetchError, fetchRetryCount]);
+
+  // Polling effect for transcript updates
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    // Only poll if transcript is processing
+    if (transcript?.status === 'processing' || (episode?.status === 'processing' && !transcript)) {
+      console.log('🔄 Starting polling for transcript updates...', {
+        transcriptStatus: transcript?.status,
+        episodeStatus: episode?.status,
+        hasTranscript: !!transcript
+      });
+      intervalId = setInterval(() => {
+        console.log('⏰ Polling interval fired - fetching updates...');
+        fetchEpisodeData();
+      }, 5000); // Poll every 5 seconds
+    } else {
+      console.log('⏹️ Stopping polling - transcript status:', transcript?.status, 'episode status:', episode?.status);
+    }
+    
+    return () => {
+      if (intervalId) {
+        console.log('🧹 Cleaning up polling interval');
+        clearInterval(intervalId);
+      }
+    };
+  }, [transcript?.status, episode?.status]);
 
   useEffect(() => {
     // Update current word based on playback time
@@ -100,8 +181,8 @@ export default function EpisodeProcessingPage() {
       setIsPlaying(false);
       setCurrentPreviewClip(null);
       setPreviewEndTime(null);
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (mediaPlayerRef.current) {
+        mediaPlayerRef.current.pause();
       }
     }
   }, [currentTime, transcriptWords, previewEndTime]);
@@ -109,8 +190,17 @@ export default function EpisodeProcessingPage() {
   const fetchEpisodeData = async () => {
     if (!user?.id) {
       console.error('User not authenticated');
+      setLastFetchError('User not authenticated');
       return;
     }
+
+    if (!session?.access_token) {
+      console.error('No session token available');
+      setLastFetchError('No session available');
+      return;
+    }
+
+    console.log('🔄 Fetching episode data for ID:', episodeId);
 
     try {
       // Fetch episode data with proper user verification
@@ -121,7 +211,13 @@ export default function EpisodeProcessingPage() {
         .eq('user_id', user.id)
         .single();
 
-      if (episodeError) throw episodeError;
+      if (episodeError) {
+        console.error('Episode fetch error:', episodeError);
+        setLastFetchError(`Episode fetch failed: ${episodeError.message}`);
+        return;
+      }
+
+      console.log('📺 Episode data:', episodeData);
       setEpisode(episodeData);
 
       // Fetch transcript if it exists
@@ -130,6 +226,19 @@ export default function EpisodeProcessingPage() {
         .select('*')
         .eq('episode_id', episodeId)
         .single();
+
+      console.log('📝 Transcript query result:', { 
+        transcriptData: transcriptData ? {
+          id: transcriptData.id,
+          status: transcriptData.status,
+          full_text: transcriptData.full_text ? 'present' : 'null',
+          confidence: transcriptData.confidence
+        } : null, 
+        transcriptError: transcriptError ? {
+          code: transcriptError.code,
+          message: transcriptError.message
+        } : null
+      });
 
       if (!transcriptError && transcriptData) {
         // Convert null values to undefined for TypeScript compatibility
@@ -141,15 +250,29 @@ export default function EpisodeProcessingPage() {
           created_at: transcriptData.created_at || new Date().toISOString(),
           updated_at: transcriptData.updated_at || new Date().toISOString(),
         };
+        console.log('✅ Setting transcript state:', {
+          id: processedTranscript.id,
+          status: processedTranscript.status,
+          hasFullText: !!processedTranscript.full_text
+        });
         setTranscript(processedTranscript);
         
         // Fetch transcript words if transcript is completed
         if (transcriptData.status === 'completed') {
+          console.log('🔤 Fetching transcript words for completed transcript...');
           const { data: wordsData, error: wordsError } = await supabase
             .from('transcript_words')
             .select('*')
             .eq('transcript_id', transcriptData.id)
             .order('word_index');
+
+          console.log('🔤 Words query result:', { 
+            wordCount: wordsData?.length || 0, 
+            wordsError: wordsError ? {
+              code: wordsError.code,
+              message: wordsError.message
+            } : null
+          });
 
           if (!wordsError && wordsData) {
             // Convert null values to undefined for TypeScript compatibility
@@ -164,9 +287,20 @@ export default function EpisodeProcessingPage() {
               word_index: word.word_index,
               created_at: word.created_at || new Date().toISOString(),
             }));
+            console.log('✅ Setting transcript words:', processedWords.length);
             setTranscriptWords(processedWords);
+          } else {
+            console.log('⚠️ No transcript words found or error occurred');
+            setTranscriptWords([]);
           }
+        } else {
+          console.log('📝 Transcript not completed, clearing words');
+          setTranscriptWords([]);
         }
+      } else {
+        console.log('❌ No transcript found or error occurred, clearing transcript state');
+        setTranscript(null);
+        setTranscriptWords([]);
       }
 
       // Fetch chapters
@@ -190,27 +324,96 @@ export default function EpisodeProcessingPage() {
       if (!clipsError && clipsData) {
         setSocialClips(clipsData);
       }
+
+      // Success - clear error states
+      setLastFetchError(null);
+      setFetchRetryCount(0);
+
     } catch (error) {
-      console.error('Error fetching episode data:', error);
+      console.error('❌ Error fetching episode data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setLastFetchError(`Failed to fetch episode data: ${errorMessage}`);
+      
+      // Don't clear states on network errors, but log the issue
+      console.log('Current states after error:', {
+        hasEpisode: !!episode,
+        hasTranscript: !!transcript,
+        transcriptStatus: transcript?.status,
+        wordCount: transcriptWords.length
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Audio event handlers
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-      setAudioLoaded(true);
-      setAudioError(null);
-      console.log('Audio metadata loaded, duration:', audioRef.current.duration);
+  // Function to download transcript in speaker-split format
+  const downloadTranscript = () => {
+    if (!transcript || !transcriptWords.length || !episode) {
+      return;
     }
+
+    // Group words by speaker and create formatted transcript
+    let formattedTranscript = `Transcript: ${episode.title}\n`;
+    formattedTranscript += `Generated: ${new Date().toLocaleDateString()}\n`;
+    formattedTranscript += `Duration: ${episode.duration ? Math.floor(episode.duration / 60) + 'm ' + Math.floor(episode.duration % 60) + 's' : 'Unknown'}\n\n`;
+    
+    let currentSpeaker = '';
+    let currentSentence = '';
+    let sentenceStartTime = 0;
+    
+    transcriptWords.forEach((word, index) => {
+      const speaker = word.speaker || 'Unknown Speaker';
+      
+      // If speaker changes, finalize previous sentence and start new one
+      if (speaker !== currentSpeaker) {
+        if (currentSentence.trim()) {
+          const timeString = `[${formatTime(sentenceStartTime)}]`;
+          formattedTranscript += `${currentSpeaker}: ${timeString} ${currentSentence.trim()}\n\n`;
+        }
+        currentSpeaker = speaker;
+        currentSentence = word.word;
+        sentenceStartTime = word.start_time;
+      } else {
+        currentSentence += ' ' + word.word;
+      }
+      
+      // End sentence on punctuation
+      if (word.word.match(/[.!?]$/)) {
+        const timeString = `[${formatTime(sentenceStartTime)}]`;
+        formattedTranscript += `${currentSpeaker}: ${timeString} ${currentSentence.trim()}\n\n`;
+        currentSentence = '';
+        sentenceStartTime = index < transcriptWords.length - 1 ? transcriptWords[index + 1].start_time : word.end_time;
+      }
+    });
+    
+    // Add final sentence if exists
+    if (currentSentence.trim()) {
+      const timeString = `[${formatTime(sentenceStartTime)}]`;
+      formattedTranscript += `${currentSpeaker}: ${timeString} ${currentSentence.trim()}\n`;
+    }
+
+    // Create and download file
+    const blob = new Blob([formattedTranscript], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${episode.title || 'transcript'}-speaker-split.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
+  // Media event handlers
+  const handleLoadedMetadata = (duration: number) => {
+    setDuration(duration);
+    setAudioLoaded(true);
+    setAudioError(null);
+    console.log('Media metadata loaded, duration:', duration);
+  };
+
+  const handleTimeUpdate = (currentTime: number) => {
+    setCurrentTime(currentTime);
   };
 
   const handleEnded = () => {
@@ -218,75 +421,70 @@ export default function EpisodeProcessingPage() {
     setCurrentTime(0);
   };
 
-  const handleAudioError = (e: any) => {
-    console.error('Audio loading error:', e);
-    console.error('Audio source:', authenticatedAudioUrl);
-    console.error('Audio element:', audioRef.current);
-    setAudioError('Failed to load audio file');
+  const handleAudioError = (error: string) => {
+    console.error('Media loading error:', error);
+    console.error('Media source:', authenticatedAudioUrl);
+    setAudioError(error);
     setAudioLoaded(false);
   };
 
-  const handleLoadStart = () => {
-    console.log('Audio loading started for:', authenticatedAudioUrl);
-    setAudioError(null);
-  };
-
-  // Audio player controls
+  // Media player controls
   const togglePlayPause = async () => {
-    if (!audioRef.current) return;
+    if (!mediaPlayerRef.current) return;
     
     try {
       if (isPlaying) {
-        audioRef.current.pause();
+        mediaPlayerRef.current.pause();
         setIsPlaying(false);
       } else {
-        await audioRef.current.play();
+        await mediaPlayerRef.current.play();
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('Error playing media:', error);
     }
   };
 
   const skipBackward = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+    if (mediaPlayerRef.current) {
+      const currentTime = mediaPlayerRef.current.getCurrentTime();
+      mediaPlayerRef.current.seekTo(Math.max(0, currentTime - 10));
     }
   };
 
   const skipForward = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.min(duration, audioRef.current.currentTime + 10);
+    if (mediaPlayerRef.current) {
+      const currentTime = mediaPlayerRef.current.getCurrentTime();
+      mediaPlayerRef.current.seekTo(Math.min(duration, currentTime + 10));
     }
   };
 
   const jumpToTime = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
+    if (mediaPlayerRef.current) {
+      mediaPlayerRef.current.seekTo(time);
       setCurrentTime(time);
     }
   };
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
+    if (mediaPlayerRef.current) {
+      mediaPlayerRef.current.setVolume(newVolume);
     }
     setIsMuted(newVolume === 0);
   };
 
   const toggleMute = () => {
-    if (audioRef.current) {
-      const newMuted = !isMuted;
-      setIsMuted(newMuted);
-      audioRef.current.volume = newMuted ? 0 : volume;
+    if (mediaPlayerRef.current) {
+      mediaPlayerRef.current.toggleMute();
+      setIsMuted(!isMuted);
     }
   };
 
   const changePlaybackRate = (rate: number) => {
     setPlaybackRate(rate);
-    if (audioRef.current) {
-      audioRef.current.playbackRate = rate;
+    if (mediaPlayerRef.current) {
+      mediaPlayerRef.current.setPlaybackRate(rate);
     }
   };
 
@@ -396,8 +594,32 @@ export default function EpisodeProcessingPage() {
 
       const result = await response.json();
       
-      // Refresh data to get updated clips
-      await fetchEpisodeData();
+      if (generateMore) {
+        // For additional clips, immediately refresh credits to show deduction
+        refreshCredits();
+        
+        // Fetch only the latest clips and append them
+        const { data: updatedClips, error: clipsError } = await supabase
+          .from('social_clips')
+          .select('*')
+          .eq('episode_id', episode.id)
+          .order('created_at', { ascending: false });
+
+        if (!clipsError && updatedClips) {
+          // Find clips that weren't in the previous list (newly generated ones)
+          const existingClipIds = new Set(socialClips.map(clip => clip.id));
+          const newClips = updatedClips.filter(clip => !existingClipIds.has(clip.id));
+          
+          // Append new clips to existing ones, sort by engagement score
+          const combinedClips = [...socialClips, ...newClips]
+            .sort((a, b) => (b.engagement_score || 0) - (a.engagement_score || 0));
+          
+          setSocialClips(combinedClips);
+        }
+      } else {
+        // For initial generation, refresh all data as before
+        await fetchEpisodeData();
+      }
     } catch (error) {
       console.error('Error generating social clips:', error);
       alert(error instanceof Error ? error.message : 'Failed to generate social clips');
@@ -407,22 +629,22 @@ export default function EpisodeProcessingPage() {
   };
 
   const handlePreviewClip = (startTime: number, endTime: number) => {
-    if (!audioRef.current) return;
+    if (!mediaPlayerRef.current) return;
     
     // If currently playing the same clip, pause it
     if (currentPreviewClip && isPlaying && currentTime >= startTime && currentTime <= endTime) {
       setIsPlaying(false);
       setCurrentPreviewClip(null);
       setPreviewEndTime(null);
-      audioRef.current.pause();
+      mediaPlayerRef.current.pause();
       return;
     }
     
     // Start playing the clip
-    audioRef.current.currentTime = startTime;
+    mediaPlayerRef.current.seekTo(startTime);
     setCurrentPreviewClip(socialClips.find(clip => clip.start_time === startTime)?.id || null);
     setPreviewEndTime(endTime);
-    audioRef.current.play();
+    mediaPlayerRef.current.play();
     setIsPlaying(true);
   };
 
@@ -446,7 +668,9 @@ export default function EpisodeProcessingPage() {
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`;
+      // Set appropriate file extension based on media type
+      const extension = episode?.media_type === 'video' ? '.mp4' : '.mp3';
+      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -491,12 +715,40 @@ export default function EpisodeProcessingPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Credit status styling
+  const getCreditStatusColor = () => {
+    const status = getCreditStatus();
+    switch (status) {
+      case 'insufficient': return 'text-error';
+      case 'low': return 'text-warning';
+      default: return 'text-success';
+    }
+  };
+
+  const getCreditStatusBg = () => {
+    const status = getCreditStatus();
+    switch (status) {
+      case 'insufficient': return 'bg-error/10 border-error/20';
+      case 'low': return 'bg-warning/10 border-warning/20';
+      default: return 'bg-success/10 border-success/20';
+    }
+  };
+
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading episode...</p>
+          <p className="text-text-secondary">Loading episode...</p>
         </div>
       </div>
     );
@@ -504,12 +756,12 @@ export default function EpisodeProcessingPage() {
 
   if (!episode) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-2xl font-bold text-text-primary mb-4">
             Episode not found
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-text-secondary mb-6">
             This episode doesn't exist or you don't have permission to access it.
           </p>
           <Button onClick={() => router.push('/dashboard')}>
@@ -521,31 +773,146 @@ export default function EpisodeProcessingPage() {
     );
   }
 
+  const userDisplayName = getUserDisplayName(user);
+  const subscriptionPlan = getSubscriptionPlan();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-surface-secondary">
+      {/* Header */}
+      <div className="bg-surface-primary border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Clickable Logo */}
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
+                  <Mic className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xl font-bold text-text-primary">Podentify</span>
+              </button>
+            </div>
+            <div className="flex items-center space-x-3">
+              {/* Credits Display */}
+              {user && !authLoading && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${getCreditStatusBg()}`}>
+                        <Coins className={`w-4 h-4 ${getCreditStatusColor()}`} />
+                        <div className="text-sm">
+                          {creditsLoading ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                              <span className="text-text-secondary">Loading...</span>
+                            </div>
+                          ) : credits ? (
+                            <>
+                              <span className={`font-semibold ${getCreditStatusColor()}`}>
+                                {credits.current_credits}
+                              </span>
+                              <span className="text-text-secondary ml-1">
+                                credits
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-text-secondary">--</span>
+                          )}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <div className="space-y-1 text-sm">
+                        {credits ? (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Current credits:</span>
+                              <span className="font-semibold">{credits.current_credits}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Monthly allocation:</span>
+                              <span>{credits.monthly_credits}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Total used:</span>
+                              <span>{credits.total_used_credits}</span>
+                            </div>
+                            <div className="border-t border-border pt-1 mt-2">
+                              <p className="text-xs text-text-secondary">
+                                1 credit = 1 minute of transcription
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-text-secondary">No credits data available.</p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {/* Return to Dashboard Button */}
+              <Button
+                variant="outline"
+                onClick={() => router.push('/dashboard')}
+                className="border-border hover:border-brand-primary"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+
+              {/* Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center space-x-2 border-border hover:border-brand-primary">
+                    <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-text-primary font-medium">{userDisplayName}</span>
+                      {subscriptionPlan && (
+                        <Badge variant="secondary" className="text-xs bg-brand-tertiary text-brand-primary">
+                          {subscriptionPlan}
+                        </Badge>
+                      )}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => router.push('/account/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Episode Title Section */}
         <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={() => router.push('/dashboard')}
-            className="mb-6 hover:bg-white/50 dark:hover:bg-gray-800/50"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h1 className="text-4xl font-bold text-text-primary mb-2">
                 {episode.title}
               </h1>
               {episode.description && (
-                <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-lg text-text-secondary mb-4">
                   {episode.description}
                 </p>
               )}
-              <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center space-x-4 text-sm text-text-tertiary">
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
                   <span>{episode.created_at ? new Date(episode.created_at).toLocaleDateString() : 'Unknown date'}</span>
@@ -572,17 +939,11 @@ export default function EpisodeProcessingPage() {
               >
                 {episode.status}
               </Badge>
-              <Button variant="outline" size="sm">
-                <Share2 className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4" />
-              </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                className="text-error hover:text-error/90 hover:bg-error/10"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -591,159 +952,22 @@ export default function EpisodeProcessingPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Left Column - Audio Player & Chapters */}
+          {/* Left Column - Media Player & Chapters */}
           <div className="xl:col-span-1 space-y-6">
-            {/* Modern Audio Player */}
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
-              <CardContent className="p-8">
-                                 {/* Audio Element */}
-                 <audio
-                   ref={audioRef}
-                   src={authenticatedAudioUrl}
-                   onTimeUpdate={handleTimeUpdate}
-                   onLoadedMetadata={handleLoadedMetadata}
-                   onEnded={handleEnded}
-                   onError={handleAudioError}
-                   onLoadStart={handleLoadStart}
-                   onCanPlay={() => {
-                     console.log('Audio can start playing');
-                     setAudioLoaded(true);
-                   }}
-                   preload="metadata"
-                   crossOrigin="use-credentials"
-                 />
-
-                {/* Waveform Visualization Placeholder */}
-                <div className="w-full h-24 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-6 flex items-center justify-center">
-                  <div className="flex items-center space-x-1">
-                    {[...Array(20)].map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-1 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full transition-all duration-150 ${
-                          isPlaying ? 'animate-pulse' : ''
-                        }`}
-                        style={{
-                          height: `${Math.random() * 60 + 20}px`,
-                          animationDelay: `${i * 0.1}s`
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                                 {/* Progress Bar */}
-                 <div className="space-y-2 mb-6">
-                   <div 
-                     className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full cursor-pointer"
-                     onClick={(e) => {
-                       const rect = e.currentTarget.getBoundingClientRect();
-                       const percent = (e.clientX - rect.left) / rect.width;
-                       jumpToTime(percent * duration);
-                     }}
-                   >
-                     <div 
-                       className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-200"
-                       style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                     />
-                   </div>
-                   <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                     <span>{formatTime(currentTime)}</span>
-                     <span>{formatTime(duration)}</span>
-                   </div>
-                 </div>
-
-                                 {/* Main Controls */}
-                 <div className="flex items-center justify-center space-x-4 mb-6">
-                   <Button 
-                     variant="outline" 
-                     size="sm" 
-                     onClick={skipBackward}
-                     className="rounded-full w-12 h-12"
-                     disabled={!audioLoaded}
-                   >
-                     <SkipBack className="w-5 h-5" />
-                   </Button>
-                   
-                   <Button 
-                     onClick={togglePlayPause} 
-                     size="lg"
-                     className="rounded-full w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all duration-200 hover:shadow-xl"
-                     disabled={!audioLoaded && !audioError}
-                   >
-                     {!audioLoaded && !audioError ? (
-                       <Loader2 className="w-8 h-8 text-white animate-spin" />
-                     ) : isPlaying ? (
-                       <div className="flex items-center justify-center space-x-1">
-                         <div className="w-[3px] h-[16px] bg-white rounded-sm drop-shadow-md"></div>
-                         <div className="w-[3px] h-[16px] bg-white rounded-sm drop-shadow-md"></div>
-                       </div>
-                     ) : (
-                       <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1 drop-shadow-md"></div>
-                     )}
-                   </Button>
-                   
-                   <Button 
-                     variant="outline" 
-                     size="sm" 
-                     onClick={skipForward}
-                     className="rounded-full w-12 h-12"
-                     disabled={!audioLoaded}
-                   >
-                     <SkipForward className="w-5 h-5" />
-                   </Button>
-                 </div>
-
-                 {/* Audio Error Message */}
-                 {audioError && (
-                   <div className="text-center text-red-500 text-sm mb-4">
-                     {audioError}
-                   </div>
-                 )}
-
-                {/* Volume Control */}
-                <div className="flex items-center space-x-3 mb-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleMute}
-                    className="p-2"
-                  >
-                    {isMuted || volume === 0 ? (
-                      <VolumeX className="w-4 h-4" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={isMuted ? 0 : volume}
-                    onChange={(e) => handleVolumeChange(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  />
-                </div>
-
-                {/* Playback Speed */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Speed</span>
-                  <div className="flex space-x-1">
-                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                      <Button
-                        key={rate}
-                        variant={playbackRate === rate ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => changePlaybackRate(rate)}
-                        className="text-xs px-2 py-1 h-8"
-                      >
-                        {rate}x
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Media Player */}
+            {authenticatedAudioUrl && (
+              <MediaPlayer
+                ref={mediaPlayerRef}
+                src={authenticatedAudioUrl}
+                mediaType={episode?.media_type === 'video' ? 'video' : 'audio'}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={handleEnded}
+                onError={handleAudioError}
+                currentTime={currentTime}
+                duration={duration}
+              />
+            )}
 
             {/* Chapters Section */}
             <ChaptersSection
@@ -752,67 +976,133 @@ export default function EpisodeProcessingPage() {
               onSeek={jumpToTime}
               onGenerateChapters={generateChapters}
               isGenerating={isGeneratingChapters}
+              disabled={!isTranscriptReady}
             />
           </div>
 
           {/* Right Column - Transcript & Social Clips */}
-          <div className="xl:col-span-2">
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+          <div className="xl:col-span-2 space-y-6">
+            {/* Transcript Section */}
+            <Card className="bg-surface-primary border-border shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Content Analysis</span>
-                  {transcript && transcript.confidence && (
-                    <Badge variant="outline" className="text-xs">
-                      {Math.round(transcript.confidence * 100)}% confidence
-                    </Badge>
-                  )}
+                  <span>Transcript</span>
+                  <div className="flex items-center space-x-2">
+                    {transcript && transcript.confidence && (
+                      <Badge variant="outline" className="text-xs">
+                        {Math.round(transcript.confidence * 100)}% confidence
+                      </Badge>
+                    )}
+                    {transcript?.status === 'completed' && transcriptWords.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={downloadTranscript}
+                        className="text-brand-primary hover:text-brand-primary/90 hover:bg-brand-primary/10"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Download
+                      </Button>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mx-6 mt-6 mb-0">
-                    <TabsTrigger value="transcript">Transcript</TabsTrigger>
-                    <TabsTrigger value="clips">Social Clips</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="transcript" className="p-6 pt-4">
+              <CardContent>
                 {!transcript ? (
                   <div className="flex items-center justify-center py-16">
                     <div className="text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-                      <p className="text-gray-500 dark:text-gray-400">
-                        Generating transcript...
-                      </p>
+                      {lastFetchError ? (
+                        <>
+                          <AlertCircle className="w-8 h-8 mx-auto mb-4 text-error" />
+                          <p className="text-error mb-2 font-semibold">
+                            Connection Issue
+                          </p>
+                          <p className="text-sm text-text-tertiary mb-4">
+                            {lastFetchError}
+                          </p>
+                          {fetchRetryCount < 3 ? (
+                            <div className="mb-4">
+                              <div className="flex items-center justify-center space-x-2 mb-2">
+                                <Loader2 className="w-4 h-4 animate-spin text-brand-primary" />
+                                <span className="text-sm text-text-secondary">
+                                  Retrying... (Attempt {fetchRetryCount + 1}/3)
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setFetchRetryCount(0);
+                                setLastFetchError(null);
+                                fetchEpisodeData();
+                              }}
+                              className="px-4 py-2 text-sm bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
+                            >
+                              Try Again
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-brand-primary" />
+                          <p className="text-text-secondary mb-2">
+                            Generating transcript...
+                          </p>
+                          <p className="text-sm text-text-tertiary">
+                            This usually takes 2-5 minutes
+                          </p>
+                          <button
+                            onClick={fetchEpisodeData}
+                            className="mt-4 px-4 py-2 text-sm bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
+                          >
+                            Check Status
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : transcript.status === 'processing' ? (
                   <div className="flex items-center justify-center py-16">
                     <div className="text-center">
-                      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                      <p className="text-gray-500 dark:text-gray-400 mb-2">
+                      <div className="w-16 h-16 border-4 border-brand-tertiary border-t-brand-primary rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-text-secondary mb-2">
                         Processing transcript...
                       </p>
-                      <p className="text-sm text-gray-400">
-                        This may take a few minutes
+                      <p className="text-sm text-text-tertiary mb-4">
+                        This may take a few minutes. Page will auto-refresh.
                       </p>
+                      <button
+                        onClick={fetchEpisodeData}
+                        className="px-4 py-2 text-sm bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
+                      >
+                        Refresh Now
+                      </button>
                     </div>
                   </div>
                 ) : transcript.status === 'failed' ? (
-                  <div className="text-center py-16">
-                    <p className="text-red-500 mb-4">
-                      Failed to generate transcript
-                    </p>
-                    <Button variant="outline">
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Retry
-                    </Button>
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <AlertCircle className="w-16 h-16 text-error mx-auto mb-4" />
+                      <p className="text-error mb-2 font-semibold">
+                        Transcript generation failed
+                      </p>
+                      <p className="text-sm text-text-tertiary mb-4">
+                        Please try uploading your file again or contact support.
+                      </p>
+                      <button
+                        onClick={() => router.push('/dashboard')}
+                        className="px-4 py-2 text-sm bg-surface-tertiary text-text-primary rounded-lg hover:bg-surface-tertiary/80 transition-colors"
+                      >
+                        Back to Dashboard
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Speaker Legend */}
                     {getUniqueSpeakers().length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
+                      <div className="flex flex-wrap gap-2 p-4 bg-surface-secondary rounded-lg">
+                        <span className="text-sm font-medium text-text-primary mr-2">
                           Speakers:
                         </span>
                         {getUniqueSpeakers().map((speaker) => (
@@ -838,10 +1128,10 @@ export default function EpisodeProcessingPage() {
                                    <span
                                      className={`inline-block px-1 py-0.5 mx-0.5 rounded cursor-pointer transition-all duration-200 ${getSpeakerColor(word.speaker)} ${
                                        currentWordIndex === index 
-                                         ? `${getSpeakerBackgroundColor(word.speaker)} ring-2 ring-blue-400 dark:ring-blue-600 shadow-sm`
+                                         ? `${getSpeakerBackgroundColor(word.speaker)} ring-2 ring-brand-primary shadow-sm`
                                          : hoveredWordIndex === index 
                                            ? `${getSpeakerBackgroundColor(word.speaker)} shadow-sm`
-                                           : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                           : 'hover:bg-surface-secondary'
                                      }`}
                                      onMouseEnter={() => setHoveredWordIndex(index)}
                                      onMouseLeave={() => setHoveredWordIndex(null)}
@@ -850,7 +1140,7 @@ export default function EpisodeProcessingPage() {
                                      {word.word}
                                    </span>
                                  </TooltipTrigger>
-                                 <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                                 <TooltipContent className="bg-surface-tertiary text-text-primary border-border">
                                    <div className="text-center">
                                      <div className="font-medium">
                                        {word.speaker || 'Unknown Speaker'}
@@ -870,7 +1160,7 @@ export default function EpisodeProcessingPage() {
                            </div>
                          ) : (
                            <div className="prose dark:prose-invert max-w-none">
-                             <p className="whitespace-pre-wrap text-lg leading-relaxed">
+                             <p className="whitespace-pre-wrap text-lg leading-relaxed text-text-primary">
                                {transcript.full_text}
                              </p>
                            </div>
@@ -879,36 +1169,34 @@ export default function EpisodeProcessingPage() {
                      </div>
                   </div>
                 )}
-                  </TabsContent>
-                  
-                  <TabsContent value="clips" className="p-6 pt-4">
-                    <SocialClipsTab
-                      clips={socialClips}
-                      transcriptWords={transcriptWords}
-                      onPreview={handlePreviewClip}
-                      onDownload={handleDownloadClip}
-                      onGenerateClips={() => generateSocialClips(false)}
-                      onGenerateMoreClips={() => generateSocialClips(true)}
-                      isGenerating={isGeneratingClips}
-                      isPlaying={isPlaying}
-                      currentTime={currentTime}
-                      currentPreviewClip={currentPreviewClip}
-                    />
-                  </TabsContent>
-                </Tabs>
               </CardContent>
             </Card>
+
+            {/* Social Clips Section */}
+            <SocialClipsSection
+              clips={socialClips}
+              transcriptWords={transcriptWords}
+              onPreview={handlePreviewClip}
+              onDownload={handleDownloadClip}
+              onGenerateClips={() => generateSocialClips(false)}
+              onGenerateMoreClips={() => generateSocialClips(true)}
+              isGenerating={isGeneratingClips}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              currentPreviewClip={currentPreviewClip}
+              disabled={!isTranscriptReady}
+            />
           </div>
         </div>
 
         {/* Delete Confirmation Dialog */}
         {showDeleteDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <div className="fixed inset-0 bg-overlay flex items-center justify-center p-4 z-50">
+            <div className="bg-surface-primary rounded-lg p-6 max-w-md w-full border border-border">
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
                 Delete Episode
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-text-secondary mb-6">
                 Are you sure you want to delete "{episode?.title}"? This action cannot be undone and will permanently remove the episode, transcript, and audio file.
               </p>
               <div className="flex space-x-3 justify-end">
@@ -923,7 +1211,7 @@ export default function EpisodeProcessingPage() {
                   variant="destructive"
                   onClick={handleDeleteEpisode}
                   disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-error hover:bg-error/90"
                 >
                   {isDeleting ? (
                     <>

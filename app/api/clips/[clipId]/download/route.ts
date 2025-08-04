@@ -38,7 +38,7 @@ export async function GET(
       .from('social_clips')
       .select(`
         *,
-        episodes!inner(id, title, audio_url, user_id)
+        episodes!inner(id, title, audio_url, user_id, media_type)
       `)
       .eq('id', clipId)
       .single();
@@ -69,7 +69,10 @@ export async function GET(
     }
 
     // Generate new clip
-    const sourceAudioPath = path.join(process.cwd(), clip.episodes.audio_url.replace('/api/audio/', 'uploads/'));
+    const isVideoSource = clip.episodes.media_type === 'video';
+    const sourceFilePath = path.join(process.cwd(), 
+      clip.episodes.audio_url.replace(isVideoSource ? '/api/video/' : '/api/audio/', 'uploads/')
+    );
     
     // Create clips directory
     const clipsDir = path.join(process.cwd(), 'uploads', user.id, 'clips');
@@ -77,21 +80,42 @@ export async function GET(
       await mkdir(clipsDir, { recursive: true });
     }
 
-    const outputPath = path.join(clipsDir, `${clipId}.mp3`);
-    const relativePath = path.join('uploads', user.id, 'clips', `${clipId}.mp3`);
+    // Determine output format and file extension based on source media type
+    const outputExtension = isVideoSource ? '.mp4' : '.mp3';
+    const outputPath = path.join(clipsDir, `${clipId}${outputExtension}`);
+    const relativePath = path.join('uploads', user.id, 'clips', `${clipId}${outputExtension}`);
 
     // Extract the clip using ffmpeg
     await new Promise<void>((resolve, reject) => {
-      ffmpeg(sourceAudioPath)
+      const ffmpegCommand = ffmpeg(sourceFilePath)
         .seekInput(clip.start_time)
         .duration(clip.duration)
-        .audioCodec('libmp3lame')
-        .audioBitrate(128)
-        .format('mp3')
         .output(outputPath)
         .on('end', () => resolve())
-        .on('error', (err) => reject(err))
-        .run();
+        .on('error', (err) => reject(err));
+
+      if (isVideoSource) {
+        // For video clips, preserve video quality but optimize for smaller file size
+        ffmpegCommand
+          .videoCodec('libx264')
+          .audioCodec('aac')
+          .videoBitrate('1000k')
+          .audioBitrate(128)
+          .format('mp4')
+          .outputOptions([
+            '-preset', 'medium',
+            '-crf', '28',
+            '-movflags', '+faststart' // Optimize for web streaming
+          ]);
+      } else {
+        // For audio clips, use the existing settings
+        ffmpegCommand
+          .audioCodec('libmp3lame')
+          .audioBitrate(128)
+          .format('mp3');
+      }
+
+      ffmpegCommand.run();
     });
 
     // Update the clip with the generated URL
@@ -102,11 +126,13 @@ export async function GET(
 
     // Return the generated clip
     const clipBuffer = await readFile(outputPath);
+    const contentType = isVideoSource ? 'video/mp4' : 'audio/mpeg';
+    const filename = `${clip.title.replace(/[^a-zA-Z0-9]/g, '_')}${outputExtension}`;
     
     return new NextResponse(clipBuffer, {
       headers: {
-        'Content-Type': 'audio/mpeg',
-        'Content-Disposition': `attachment; filename="${clip.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3"`
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`
       }
     });
 

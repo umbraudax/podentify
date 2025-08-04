@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileAudio, Plus, Settings, User, LogOut, Mic, Clock, Play, Trash2, MoreVertical } from 'lucide-react';
+import { Upload, FileAudio, Plus, Settings, User, LogOut, Mic, Clock, Play, Trash2, MoreVertical, Coins, Video } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Episode } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import SubscriptionStatus from '@/components/dashboard/SubscriptionStatus';
-import { isValidAudioFile, isValidFileSize, formatFileSize, getUserDisplayName } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useCredits } from '@/hooks/useCredits';
+import { isValidMediaFile, isValidFileSize, formatFileSize, getUserDisplayName } from '@/lib/utils';
 import { SUPPORTED_AUDIO_FORMATS, MAX_FILE_SIZE } from '@/lib/constants';
 import {
   DropdownMenu,
@@ -19,9 +20,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
 
 export default function Dashboard() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { getSubscriptionPlan } = useSubscription();
+  const { credits, loading: creditsLoading, getCreditStatus, refresh: refreshCredits } = useCredits();
   const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -31,12 +41,12 @@ export default function Dashboard() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/');
     } else if (user) {
       fetchRecentEpisodes();
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   const fetchRecentEpisodes = async () => {
     if (!user?.id) {
@@ -54,6 +64,9 @@ export default function Dashboard() {
 
       if (error) throw error;
       setRecentEpisodes(episodes || []);
+      
+      // Refresh credits when fetching episodes to ensure they're up to date
+      refreshCredits();
     } catch (error) {
       console.error('Error fetching episodes:', error);
     } finally {
@@ -94,7 +107,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -139,8 +152,8 @@ export default function Dashboard() {
     const file = files[0];
     
     // Validate file type
-    if (!isValidAudioFile(file)) {
-      setUploadError(`Invalid file type. Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(', ').toUpperCase()}`);
+    if (!isValidMediaFile(file)) {
+      setUploadError('Invalid file type. Supported formats: MP3, WAV, M4A, MP4, MOV, AVI, MKV, WEBM');
       return;
     }
     
@@ -181,6 +194,7 @@ export default function Dashboard() {
       
       // Refresh episodes list
       fetchRecentEpisodes();
+      refreshCredits(); // Refresh credits after successful upload
       
       // Redirect to processing page
       router.push(`/dashboard/episode/${result.episode.id}`);
@@ -201,11 +215,31 @@ export default function Dashboard() {
   };
 
   const userDisplayName = getUserDisplayName(user);
+  const subscriptionPlan = getSubscriptionPlan();
+
+  // Credit status styling
+  const getCreditStatusColor = () => {
+    const status = getCreditStatus();
+    switch (status) {
+      case 'insufficient': return 'text-error';
+      case 'low': return 'text-warning';
+      default: return 'text-success';
+    }
+  };
+
+  const getCreditStatusBg = () => {
+    const status = getCreditStatus();
+    switch (status) {
+      case 'insufficient': return 'bg-error/10 border-error/20';
+      case 'low': return 'bg-warning/10 border-warning/20';
+      default: return 'bg-success/10 border-success/20';
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-surface-secondary">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-surface-primary border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -214,28 +248,94 @@ export default function Dashboard() {
                 onClick={() => router.push('/')}
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
                   <Mic className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Podtentify</span>
+                <span className="text-xl font-bold text-text-primary">Podentify</span>
               </button>
-              <div className="border-l border-gray-300 dark:border-gray-600 h-8"></div>
+              <div className="border-l border-border h-8"></div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+                <p className="text-text-secondary mt-1">
                   Welcome back, {userDisplayName}!
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Credits Display */}
+                              {user && !authLoading && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${getCreditStatusBg()}`}>
+                        <Coins className={`w-4 h-4 ${getCreditStatusColor()}`} />
+                        <div className="text-sm">
+                          {creditsLoading ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                              <span className="text-text-secondary">Loading...</span>
+                            </div>
+                          ) : credits ? (
+                            <>
+                              <span className={`font-semibold ${getCreditStatusColor()}`}>
+                                {credits.current_credits}
+                              </span>
+                              <span className="text-text-secondary ml-1">
+                                credits
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-text-secondary">--</span>
+                          )}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <div className="space-y-1 text-sm">
+                        {credits ? (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Current credits:</span>
+                              <span className="font-semibold">{credits.current_credits}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Monthly allocation:</span>
+                              <span>{credits.monthly_credits}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Total used:</span>
+                              <span>{credits.total_used_credits}</span>
+                            </div>
+                            <div className="border-t border-border pt-1 mt-2">
+                              <p className="text-xs text-text-secondary">
+                                1 credit = 1 minute of transcription
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-text-secondary">No credits data available.</p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
               {/* Profile Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-2 border-gray-300 dark:border-gray-600 hover:border-blue-600 dark:hover:border-blue-400">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <Button variant="outline" className="flex items-center space-x-2 border-border hover:border-brand-primary">
+                    <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
                       <User className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">{userDisplayName}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-text-primary font-medium">{userDisplayName}</span>
+                      {subscriptionPlan && (
+                        <Badge variant="secondary" className="text-xs bg-brand-tertiary text-brand-primary">
+                          {subscriptionPlan}
+                        </Badge>
+                      )}
+                    </div>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -256,13 +356,14 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="space-y-8">
+
           {/* Upload Section */}
-          <div className="lg:col-span-3 space-y-8">
-            <Card className="border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors bg-white dark:bg-gray-800">
+          <div className="space-y-8">
+            <Card className="border-2 border-dashed border-border hover:border-brand-primary transition-colors bg-surface-primary">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-3 text-gray-900 dark:text-gray-100">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <CardTitle className="flex items-center space-x-3 text-text-primary">
+                  <div className="w-10 h-10 bg-brand-primary rounded-lg flex items-center justify-center">
                     <Upload className="w-5 h-5 text-white" />
                   </div>
                   <span>Upload New Episode</span>
@@ -270,16 +371,16 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 {uploadError && (
-                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-red-800 dark:text-red-400 text-sm">{uploadError}</p>
+                  <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg">
+                    <p className="text-error text-sm">{uploadError}</p>
                   </div>
                 )}
                 
                 <div
                   className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
                     dragActive 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+                      ? 'border-brand-primary bg-brand-tertiary' 
+                      : 'border-border hover:border-brand-primary hover:bg-brand-tertiary/50'
                   }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -288,29 +389,29 @@ export default function Dashboard() {
                 >
                   <input
                     type="file"
-                    accept="audio/*"
+                    accept="audio/*,video/*"
                     onChange={handleChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   
                   <div className="space-y-4">
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
-                      <FileAudio className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    <div className="w-16 h-16 bg-brand-tertiary rounded-full flex items-center justify-center mx-auto">
+                      <FileAudio className="w-8 h-8 text-brand-primary" />
                     </div>
                     
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      <h3 className="text-lg font-semibold text-text-primary mb-2">
                         Drop your podcast file here
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      <p className="text-text-secondary mb-4">
                         or click to browse your files
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-500">
-                        Supports {SUPPORTED_AUDIO_FORMATS.join(', ').toUpperCase()} files up to {formatFileSize(MAX_FILE_SIZE)}
+                      <p className="text-sm text-text-tertiary">
+                        Supports audio (MP3, WAV, M4A) and video (MP4, MOV, AVI, MKV, WEBM) files up to {formatFileSize(MAX_FILE_SIZE)}
                       </p>
                     </div>
                     
-                    <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700">
+                    <Button className="bg-brand-primary hover:bg-brand-primary/90">
                       <Plus className="w-4 h-4 mr-2" />
                       Choose File
                     </Button>
@@ -320,53 +421,55 @@ export default function Dashboard() {
             </Card>
 
             {/* Recent Episodes */}
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <Card className="bg-surface-primary border-border">
               <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-gray-100">Recent Episodes</CardTitle>
+                <CardTitle className="text-text-primary">Episodes</CardTitle>
               </CardHeader>
               <CardContent>
                 {episodesLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2">Loading episodes...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div>
+                    <p className="text-text-secondary mt-2">Loading episodes...</p>
                   </div>
                 ) : recentEpisodes.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FileAudio className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                    <div className="w-16 h-16 bg-surface-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileAudio className="w-8 h-8 text-text-tertiary" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No episodes yet</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Upload your first podcast episode to get started with AI-powered show notes and social clips.</p>
+                    <h3 className="text-lg font-medium text-text-primary mb-2">No episodes yet</h3>
+                    <p className="text-text-secondary">Upload your first podcast episode to get started with AI-powered show notes and social clips.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {recentEpisodes.map((episode) => (
                       <div
                         key={episode.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="flex items-center justify-between p-4 bg-surface-secondary rounded-lg hover:bg-surface-tertiary transition-colors cursor-pointer"
                         onClick={() => router.push(`/dashboard/episode/${episode.id}`)}
                       >
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                            {episode.status === 'completed' ? (
-                              <Play className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <div className="w-10 h-10 bg-brand-tertiary rounded-lg flex items-center justify-center">
+                            {episode.media_type === 'video' ? (
+                              <Video className="w-5 h-5 text-purple-500" />
+                            ) : episode.status === 'completed' ? (
+                              <Play className="w-5 h-5 text-brand-primary" />
                             ) : (
-                              <FileAudio className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              <FileAudio className="w-5 h-5 text-brand-primary" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <h4 className="text-sm font-medium text-text-primary truncate">
                               {episode.title}
                             </h4>
                             <div className="flex items-center space-x-2 mt-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                              <Clock className="w-3 h-3 text-text-tertiary" />
+                              <span className="text-xs text-text-secondary">
                                 {episode.created_at ? new Date(episode.created_at).toLocaleDateString() : 'Unknown date'}
                               </span>
                               {episode.duration && (
                                 <>
-                                  <span className="text-gray-300 dark:text-gray-600">•</span>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="text-text-tertiary">•</span>
+                                  <span className="text-xs text-text-secondary">
                                     {Math.floor(episode.duration / 60)}m {Math.floor(episode.duration % 60)}s
                                   </span>
                                 </>
@@ -415,21 +518,18 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Subscription Status Sidebar */}
-          <div className="space-y-6">
-            <SubscriptionStatus />
-          </div>
+
         </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
       {deleteEpisodeId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="fixed inset-0 bg-overlay flex items-center justify-center p-4 z-50">
+          <div className="bg-surface-primary rounded-lg p-6 max-w-md w-full border border-border">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               Delete Episode
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-text-secondary mb-6">
               Are you sure you want to delete this episode? This action cannot be undone and will permanently remove the episode, transcript, and audio file.
             </p>
             <div className="flex space-x-3 justify-end">
@@ -444,7 +544,7 @@ export default function Dashboard() {
                 variant="destructive"
                 onClick={() => handleDeleteEpisode(deleteEpisodeId)}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-error hover:bg-error/90"
               >
                 {isDeleting ? (
                   <>

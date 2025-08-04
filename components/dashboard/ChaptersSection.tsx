@@ -14,6 +14,7 @@ interface ChaptersSectionProps {
   onSeek: (time: number) => void;
   onGenerateChapters: () => void;
   isGenerating: boolean;
+  disabled?: boolean;
 }
 
 export default function ChaptersSection({
@@ -21,7 +22,8 @@ export default function ChaptersSection({
   currentTime,
   onSeek,
   onGenerateChapters,
-  isGenerating
+  isGenerating,
+  disabled = false
 }: ChaptersSectionProps) {
   const [hoveredChapter, setHoveredChapter] = useState<string | null>(null);
 
@@ -55,10 +57,16 @@ export default function ChaptersSection({
             <Button 
               onClick={onGenerateChapters}
               className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              disabled={disabled}
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Generate Chapters
             </Button>
+            {disabled && (
+              <p className="text-sm text-gray-500 mt-3">
+                Please wait for transcript to complete before generating chapters
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -208,11 +216,16 @@ export default function ChaptersSection({
               size="sm" 
               onClick={onGenerateChapters}
               className="w-full"
-              disabled={isGenerating}
+              disabled={isGenerating || disabled}
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Regenerate Chapters
             </Button>
+            {disabled && (
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                Please wait for transcript to complete before regenerating chapters
+              </p>
+            )}
           </div>
         )}
       </CardContent>

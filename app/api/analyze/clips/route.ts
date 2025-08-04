@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { geminiService } from '@/lib/gemini-service';
+import { hasEnoughCredits, deductCredits } from '@/lib/credit-service';
 
 // Create a Supabase client with service role for server operations
 const supabaseAdmin = createClient(
@@ -67,6 +68,26 @@ export async function POST(request: NextRequest) {
     let newClips = [];
 
     if (generateMore) {
+      // Check if user has enough credits for additional clip generation (2 credits required)
+      const hasCredits = await hasEnoughCredits(user.id, 2);
+      if (!hasCredits) {
+        return NextResponse.json({ 
+          error: 'Insufficient credits', 
+          message: 'Additional clip generation requires 2 credits. Please upgrade your plan or wait for your monthly refresh.' 
+        }, { status: 402 });
+      }
+
+      // Deduct 2 credits for additional clip generation
+      const creditDeducted = await deductCredits(user.id, 2);
+      if (!creditDeducted) {
+        return NextResponse.json({ 
+          error: 'Credit deduction failed', 
+          message: 'Unable to process credit deduction. Please try again.' 
+        }, { status: 500 });
+      }
+
+      console.log(`Deducted 2 credits for additional clip generation. User: ${user.id}`);
+
       // Get existing clips to avoid duplicates
       const { data: existingClips } = await supabaseAdmin
         .from('social_clips')

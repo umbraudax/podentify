@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       chapters: {
@@ -90,6 +65,7 @@ export type Database = {
           description: string | null
           duration: number | null
           id: string
+          media_type: string
           show_notes: string | null
           status: Database["public"]["Enums"]["episode_status"] | null
           title: string
@@ -102,6 +78,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: string
+          media_type?: string
           show_notes?: string | null
           status?: Database["public"]["Enums"]["episode_status"] | null
           title: string
@@ -114,6 +91,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: string
+          media_type?: string
           show_notes?: string | null
           status?: Database["public"]["Enums"]["episode_status"] | null
           title?: string
@@ -240,7 +218,7 @@ export type Database = {
           id: number
           payment_intent_id: string
           payment_status: string
-          status: Database["public"]["Enums"]["stripe_order_status"]
+          status: Database["public"]["Enums"]["stripe_order_status"] | null
           updated_at: string | null
         }
         Insert: {
@@ -254,7 +232,7 @@ export type Database = {
           id?: never
           payment_intent_id: string
           payment_status: string
-          status?: Database["public"]["Enums"]["stripe_order_status"]
+          status?: Database["public"]["Enums"]["stripe_order_status"] | null
           updated_at?: string | null
         }
         Update: {
@@ -268,7 +246,7 @@ export type Database = {
           id?: never
           payment_intent_id?: string
           payment_status?: string
-          status?: Database["public"]["Enums"]["stripe_order_status"]
+          status?: Database["public"]["Enums"]["stripe_order_status"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -320,92 +298,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      subscriptions: {
-        Row: {
-          amount: number | null
-          cancel_at_period_end: boolean | null
-          canceled_at: number | null
-          created_at: string
-          currency: string | null
-          current_period_end: number | null
-          current_period_start: number | null
-          custom_field_data: Json | null
-          customer_cancellation_comment: string | null
-          customer_cancellation_reason: string | null
-          customer_id: string | null
-          ended_at: number | null
-          ends_at: number | null
-          id: string
-          interval: string | null
-          metadata: Json | null
-          price_id: string | null
-          started_at: number | null
-          status: string | null
-          stripe_id: string | null
-          stripe_price_id: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: number | null
-          created_at?: string
-          currency?: string | null
-          current_period_end?: number | null
-          current_period_start?: number | null
-          custom_field_data?: Json | null
-          customer_cancellation_comment?: string | null
-          customer_cancellation_reason?: string | null
-          customer_id?: string | null
-          ended_at?: number | null
-          ends_at?: number | null
-          id?: string
-          interval?: string | null
-          metadata?: Json | null
-          price_id?: string | null
-          started_at?: number | null
-          status?: string | null
-          stripe_id?: string | null
-          stripe_price_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: number | null
-          created_at?: string
-          currency?: string | null
-          current_period_end?: number | null
-          current_period_start?: number | null
-          custom_field_data?: Json | null
-          customer_cancellation_comment?: string | null
-          customer_cancellation_reason?: string | null
-          customer_id?: string | null
-          ended_at?: number | null
-          ends_at?: number | null
-          id?: string
-          interval?: string | null
-          metadata?: Json | null
-          price_id?: string | null
-          started_at?: number | null
-          status?: string | null
-          stripe_id?: string | null
-          stripe_price_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["user_id"]
-          },
-        ]
       }
       transcript_words: {
         Row: {
@@ -489,6 +381,39 @@ export type Database = {
           },
         ]
       }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          current_credits: number
+          last_credit_refresh: string | null
+          monthly_credits: number
+          total_earned_credits: number
+          total_used_credits: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_credits?: number
+          last_credit_refresh?: string | null
+          monthly_credits?: number
+          total_earned_credits?: number
+          total_used_credits?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_credits?: number
+          last_credit_refresh?: string | null
+          monthly_credits?: number
+          total_earned_credits?: number
+          total_used_credits?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_plans: {
         Row: {
           plan_id: string
@@ -531,81 +456,6 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          credits: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          image: string | null
-          name: string | null
-          subscription: string | null
-          token_identifier: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          credits?: string | null
-          email?: string | null
-          full_name?: string | null
-          id: string
-          image?: string | null
-          name?: string | null
-          subscription?: string | null
-          token_identifier: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          credits?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          image?: string | null
-          name?: string | null
-          subscription?: string | null
-          token_identifier?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      webhook_events: {
-        Row: {
-          created_at: string
-          data: Json | null
-          event_type: string
-          id: string
-          modified_at: string
-          stripe_event_id: string | null
-          type: string
-        }
-        Insert: {
-          created_at?: string
-          data?: Json | null
-          event_type: string
-          id?: string
-          modified_at?: string
-          stripe_event_id?: string | null
-          type: string
-        }
-        Update: {
-          created_at?: string
-          data?: Json | null
-          event_type?: string
-          id?: string
-          modified_at?: string
-          stripe_event_id?: string | null
-          type?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       stripe_user_orders: {
@@ -643,7 +493,35 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      add_credits: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_is_monthly_refresh?: boolean
+        }
+        Returns: undefined
+      }
+      allocate_subscription_credits: {
+        Args: {
+          p_user_id: string
+          p_monthly_allocation: number
+          p_plan_name: string
+          p_is_plan_change?: boolean
+        }
+        Returns: Json
+      }
+      deduct_credits: {
+        Args: { p_user_id: string; p_amount: number }
+        Returns: boolean
+      }
+      fix_user_credits_for_plan: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      refresh_monthly_credits: {
+        Args: { p_user_id: string; p_monthly_allocation: number }
+        Returns: undefined
+      }
     }
     Enums: {
       episode_status: "uploading" | "processing" | "completed" | "failed"
@@ -784,9 +662,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       episode_status: ["uploading", "processing", "completed", "failed"],

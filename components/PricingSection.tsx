@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Sparkles, Zap, Loader2, Crown } from 'lucide-react';
+import { Check, Sparkles, Zap, Loader2, Crown, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { stripeProducts } from '@/src/stripe-config';
+import { stripeProducts, freePlan, getPlanNameByPriceId } from '@/src/stripe-config';
 import { supabase } from '@/lib/supabase';
 import { ApiResponse } from '@/lib/types';
 
@@ -15,8 +15,11 @@ export default function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const { isActive } = useSubscription();
+  const { subscription, hasValidSubscription, getSubscriptionPlan } = useSubscription();
   const router = useRouter();
+
+  const currentPlan = getSubscriptionPlan();
+  const hasActiveSubscription = hasValidSubscription();
 
   const handleSubscribe = async (priceId: string) => {
     if (!user) {
@@ -86,87 +89,55 @@ export default function PricingSection() {
     router.push('/account/settings');
   };
 
-  const features = [
-    'Unlimited episode processing',
-    'AI-generated show notes',
-    'Social media clip extraction',
-    'SEO-optimized content',
-    'Priority processing',
-    'Advanced analytics',
-    'Export to multiple formats',
-    'Email support'
-  ];
-
-  const hasActiveSubscription = isActive();
-
   return (
-    <section id="pricing" className="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
+    <section id="pricing" className="py-20 bg-surface-secondary">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Simple, Transparent Pricing
+          <h2 className="text-4xl font-bold text-text-primary mb-4">
+            Simple, Credit-Based Pricing
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Choose the plan that fits your podcast workflow. Start free, upgrade when you&apos;re ready.
+          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+            Pay only for what you use. 1 credit = 1 minute of transcription. 60 credits = $1.
           </p>
         </div>
 
-        {/* Error Display */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800 text-sm">{error}</p>
-              <button 
-                onClick={() => setError(null)}
-                className="text-red-600 hover:text-red-800 text-sm underline mt-2"
-              >
-                Dismiss
-              </button>
-            </div>
+          <div className="mb-8 p-4 bg-error/10 border border-error/20 rounded-lg text-error text-center max-w-md mx-auto">
+            {error}
           </div>
         )}
 
-        {/* Pricing Cards */}
-        <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Free Plan */}
-          <Card className="border-2 border-gray-200 hover:border-gray-300 transition-colors">
+          <Card className="border-2 border-border hover:border-gray-300 transition-colors relative">
             <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-6 h-6 text-gray-600" />
+              <div className="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Mic className="w-6 h-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold">Free</CardTitle>
-              <div className="text-4xl font-bold text-gray-900 mt-4">
-                $0
-                <span className="text-lg font-normal text-gray-600">/month</span>
+              <CardTitle className="text-2xl font-bold text-text-primary">Basic</CardTitle>
+              <div className="text-4xl font-bold text-text-primary mt-4">
+                Free
               </div>
-              <p className="text-gray-600">Perfect for getting started</p>
+              <p className="text-text-secondary">Perfect for getting started</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-3">
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">3 episodes per month</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Basic show notes</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">2 social clips per episode</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Community support</span>
-                </li>
+                {freePlan.features.map((feature, index) => (
+                  <li key={index} className="flex items-center space-x-3">
+                    <Check className="w-5 h-5 text-success flex-shrink-0" />
+                    <span className="text-text-secondary">{feature}</span>
+                  </li>
+                ))}
               </ul>
-              {!hasActiveSubscription && (
+              {currentPlan === 'Basic' ? (
+                <Button className="w-full bg-success hover:bg-success/90" disabled>
+                  Current Plan
+                </Button>
+              ) : (
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => router.push('/auth/signup')}
-                  disabled={loading !== null}
+                  onClick={() => router.push('/auth/signin')}
                 >
                   Get Started Free
                 </Button>
@@ -175,131 +146,112 @@ export default function PricingSection() {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="border-2 border-blue-500 relative shadow-xl">
+          <Card className="border-2 border-brand-primary relative shadow-xl bg-surface-primary">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="bg-brand-primary text-white px-4 py-2 rounded-full text-sm font-semibold">
                 Most Popular
               </span>
             </div>
             <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold">Pro</CardTitle>
-              <div className="text-4xl font-bold text-gray-900 mt-4">
-                $30.00
-                <span className="text-lg font-normal text-gray-600">/month</span>
+              <CardTitle className="text-2xl font-bold text-text-primary">Pro</CardTitle>
+              <div className="text-4xl font-bold text-text-primary mt-4">
+                $14.99
+                <span className="text-lg font-normal text-text-secondary">/month</span>
               </div>
-              <p className="text-gray-600">For serious podcasters</p>
+              <p className="text-text-secondary">For regular podcasters</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-3">
-                {features.map((feature, index) => (
+                {stripeProducts[0].features.map((feature, index) => (
                   <li key={index} className="flex items-center space-x-3">
-                    <Check className="w-5 h-5 text-green-600" />
-                    <span className="text-gray-700">{feature}</span>
+                    <Check className="w-5 h-5 text-success flex-shrink-0" />
+                    <span className="text-text-secondary">{feature}</span>
                   </li>
                 ))}
               </ul>
-              {hasActiveSubscription ? (
+              {currentPlan === 'Pro' ? (
                 <Button 
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-success hover:bg-success/90"
                   onClick={handleManageSubscription}
                 >
                   Manage Subscription
                 </Button>
               ) : (
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-brand-primary hover:bg-brand-primary/90"
                   onClick={() => handleSubscribe(stripeProducts[0].priceId)}
                   disabled={loading === stripeProducts[0].priceId}
                 >
                   {loading === stripeProducts[0].priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Subscribe to Pro
+                  Upgrade to Pro
                 </Button>
               )}
             </CardContent>
           </Card>
 
-          {/* Enterprise Plan */}
-          <Card className="border-2 border-gray-200 hover:border-gray-300 transition-colors">
+          {/* Ultra Plan */}
+          <Card className="border-2 border-purple-500 hover:border-purple-600 transition-colors relative bg-gradient-to-b from-purple-50 to-white">
             <CardHeader className="text-center pb-8">
               <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Crown className="w-6 h-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold">Enterprise</CardTitle>
-              <div className="text-4xl font-bold text-gray-900 mt-4">
-                Custom
+              <CardTitle className="text-2xl font-bold text-text-primary">Ultra</CardTitle>
+              <div className="text-4xl font-bold text-text-primary mt-4">
+                $29.99
+                <span className="text-lg font-normal text-text-secondary">/month</span>
               </div>
-              <p className="text-gray-600">For large teams and networks</p>
+              <p className="text-text-secondary">For power users</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-3">
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Everything in Pro</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Unlimited episodes</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Team collaboration</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Custom integrations</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Dedicated support</span>
-                </li>
+                {stripeProducts[1].features.map((feature, index) => (
+                  <li key={index} className="flex items-center space-x-3">
+                    <Check className="w-5 h-5 text-success flex-shrink-0" />
+                    <span className="text-text-secondary">{feature}</span>
+                  </li>
+                ))}
               </ul>
-              <Button variant="outline" className="w-full">
-                Contact Sales
-              </Button>
+              {currentPlan === 'Ultra' ? (
+                <Button 
+                  className="w-full bg-success hover:bg-success/90"
+                  onClick={handleManageSubscription}
+                >
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => handleSubscribe(stripeProducts[1].priceId)}
+                  disabled={loading === stripeProducts[1].priceId}
+                >
+                  {loading === stripeProducts[1].priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Upgrade to Ultra
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* FAQ Section */}
-        <div className="mt-20 max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold text-center text-gray-900 mb-8">
-            Frequently Asked Questions
-          </h3>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                Can I cancel anytime?
-              </h4>
-              <p className="text-gray-600 text-sm">
-                Yes, cancel anytime. You&apos;ll keep access until your billing period ends.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                What formats are supported?
-              </h4>
-              <p className="text-gray-600 text-sm">
-                MP3, WAV, M4A, and more. Files up to 500MB supported.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                How accurate is the AI?
-              </h4>
-              <p className="text-gray-600 text-sm">
-                95%+ accuracy with intelligent content structuring and editing capabilities.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                Do you offer refunds?
-              </h4>
-              <p className="text-gray-600 text-sm">
-                Yes, we offer a 30-day money-back guarantee for all subscriptions.
-              </p>
+        {/* Credit Explanation */}
+        <div className="mt-16 text-center">
+          <div className="bg-surface-primary rounded-lg p-8 max-w-4xl mx-auto border border-border">
+            <h3 className="text-2xl font-bold text-text-primary mb-4">How Credits Work</h3>
+            <div className="grid md:grid-cols-3 gap-6 text-left">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-brand-primary mb-2">1:1</div>
+                <p className="text-text-secondary">1 credit = 1 minute of audio transcription</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-brand-primary mb-2">$1</div>
+                <p className="text-text-secondary">60 credits cost $1 (when purchasing additional credits)</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-brand-primary mb-2">Monthly</div>
+                <p className="text-text-secondary">Credits roll over and stack with your monthly allocation</p>
+              </div>
             </div>
           </div>
         </div>

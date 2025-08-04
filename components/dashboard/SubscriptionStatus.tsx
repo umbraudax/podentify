@@ -1,58 +1,85 @@
 'use client';
 
-import { Crown, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useSubscription } from '@/hooks/useSubscription';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/utils';
+import { CheckCircle, AlertTriangle, Clock, Crown, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function SubscriptionStatus() {
-  const { subscription, loading, isActive, isPastDue, isCanceled, willCancelAtPeriodEnd, getSubscriptionPlan, refresh } = useSubscription();
+  const { subscription, hasValidSubscription, isActive, isPastDue, isCanceled, willCancelAtPeriodEnd, getSubscriptionPlan, refresh } = useSubscription();
   const router = useRouter();
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const planName = getSubscriptionPlan();
 
-  if (!subscription || !planName) {
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString();
+  };
+
+  // Helper functions for plan-specific colors
+  const getPlanColors = (plan: string | null) => {
+    switch (plan) {
+      case 'Ultra':
+        return {
+          iconColor: 'text-purple-600',
+          cardBorder: 'border-purple-200',
+          cardBg: 'bg-purple-50',
+          titleColor: 'text-purple-800',
+          textColor: 'text-purple-700',
+          buttonBg: 'bg-purple-600',
+          buttonHover: 'hover:bg-purple-700'
+        };
+      case 'Pro':
+        return {
+          iconColor: 'text-blue-600',
+          cardBorder: 'border-blue-200',
+          cardBg: 'bg-blue-50',
+          titleColor: 'text-blue-800',
+          textColor: 'text-blue-700',
+          buttonBg: 'bg-blue-600',
+          buttonHover: 'hover:bg-blue-700'
+        };
+      default: // Basic/Free
+        return {
+          iconColor: 'text-gray-600',
+          cardBorder: 'border-gray-200',
+          cardBg: 'bg-gray-50',
+          titleColor: 'text-gray-800',
+          textColor: 'text-gray-700',
+          buttonBg: 'bg-gray-600',
+          buttonHover: 'hover:bg-gray-700'
+        };
+    }
+  };
+
+  if (!hasValidSubscription()) {
+    const colors = getPlanColors(null);
     return (
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className={`${colors.cardBorder} ${colors.cardBg}`}>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2 text-blue-800">
-            <Crown className="w-5 h-5" />
+          <CardTitle className={`flex items-center space-x-2 ${colors.titleColor}`}>
+            <Crown className={`w-5 h-5 ${colors.iconColor}`} />
             <span>Free Plan</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-blue-700">
+          <p className={`text-sm ${colors.textColor}`}>
             You&apos;re currently on the free plan with limited features.
           </p>
           <div className="pt-2">
-            <p className="text-xs text-blue-600 font-medium">
-              • 3 episodes per month
+            <p className={`text-xs ${colors.textColor} font-medium`}>
+              • 20 monthly transcript credits
             </p>
-            <p className="text-xs text-blue-600 font-medium">
-              • Basic show notes
+            <p className={`text-xs ${colors.textColor} font-medium`}>
+              • Chapter generation only
             </p>
-            <p className="text-xs text-blue-600 font-medium">
-              • 2 social clips per episode
+            <p className={`text-xs ${colors.textColor} font-medium`}>
+              • Basic support
             </p>
           </div>
           <Button 
             size="sm" 
-            className="bg-blue-600 hover:bg-blue-700 w-full"
+            className={`${colors.buttonBg} ${colors.buttonHover} w-full`}
             onClick={() => router.push('/#pricing')}
           >
             Upgrade to Pro
@@ -74,87 +101,74 @@ export default function SubscriptionStatus() {
     if (isActive()) return 'Active';
     if (isPastDue()) return 'Past Due';
     if (isCanceled()) return 'Canceled';
-    return subscription.subscription_status;
+    return subscription?.subscription_status || 'Unknown';
   };
 
   const getStatusColor = () => {
-    if (isActive() && !willCancelAtPeriodEnd()) return 'border-green-200 bg-gradient-to-br from-green-50 to-blue-50';
-    if (isActive() && willCancelAtPeriodEnd()) return 'border-yellow-200 bg-yellow-50';
-    if (isPastDue()) return 'border-yellow-200 bg-yellow-50';
-    if (isCanceled()) return 'border-red-200 bg-red-50';
-    return 'border-gray-200 bg-gray-50';
+    if (isActive() && !willCancelAtPeriodEnd()) return 'text-green-600';
+    if (isPastDue()) return 'text-yellow-600';
+    if (isCanceled() || willCancelAtPeriodEnd()) return 'text-red-600';
+    return 'text-gray-600';
   };
 
+  const colors = getPlanColors(planName);
 
   return (
-    <Card className={getStatusColor()}>
+    <Card className={`${colors.cardBorder} ${colors.cardBg}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className={`flex items-center justify-between ${colors.titleColor}`}>
           <div className="flex items-center space-x-2">
-            <Crown className="w-5 h-5 text-blue-600" />
-            <span>{planName}</span>
-            {getStatusIcon()}
+            <Crown className={`w-5 h-5 ${colors.iconColor}`} />
+            <span>{planName} Plan</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refresh}
-            className="h-8 w-8 p-0 hover:bg-white/50"
-            title="Refresh subscription status"
-          >
-            <RefreshCw className="w-3 h-3" />
-          </Button>
+          <div className="flex items-center space-x-1">
+            {getStatusIcon()}
+            <span className={`text-sm font-medium ${getStatusColor()}`}>
+              {getStatusText()}
+            </span>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Status:</span>
-          <span className="font-medium capitalize">{getStatusText()}</span>
+        <div className="flex items-center justify-between text-sm">
+          <span className={colors.textColor}>Status:</span>
+          <span className={`font-medium ${getStatusColor()}`}>
+            {getStatusText()}
+          </span>
         </div>
-        
-        {subscription.current_period_end && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Next billing:</span>
-            <span className="font-medium">{formatDate(subscription.current_period_end)}</span>
-          </div>
-        )}
 
-        {subscription.payment_method_brand && subscription.payment_method_last4 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Payment method:</span>
-            <span className="font-medium capitalize">
-              {subscription.payment_method_brand} •••• {subscription.payment_method_last4}
+        {subscription?.current_period_end && (
+          <div className="flex items-center justify-between text-sm">
+            <span className={colors.textColor}>Next billing:</span>
+            <span className={`font-medium ${colors.textColor}`}>
+              {formatDate(subscription.current_period_end)}
             </span>
           </div>
         )}
 
-        {isActive() && !willCancelAtPeriodEnd() && (
-          <div className="pt-2 border-t border-green-200">
-            <p className="text-xs text-green-700 font-medium mb-2">Pro Benefits Active:</p>
-            <div className="space-y-1">
-              <p className="text-xs text-green-600">• Unlimited episode processing</p>
-              <p className="text-xs text-green-600">• AI-generated show notes</p>
-              <p className="text-xs text-green-600">• Social media clip extraction</p>
-              <p className="text-xs text-green-600">• Priority processing</p>
-            </div>
+        {willCancelAtPeriodEnd() && subscription?.current_period_end && (
+          <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+            Will cancel on {formatDate(subscription.current_period_end)}
           </div>
         )}
 
-        {willCancelAtPeriodEnd() && (
-          <div className="p-2 bg-yellow-100 border border-yellow-200 rounded text-xs text-yellow-800">
-            Your subscription will cancel at the end of the current period.
-          </div>
-        )}
-
-        {isPastDue() && (
+        <div className="flex space-x-2 pt-2">
           <Button 
             size="sm" 
-            className="w-full bg-yellow-600 hover:bg-yellow-700"
-            onClick={() => router.push('/pricing')}
+            variant="outline"
+            className="flex-1"
+            onClick={() => router.push('/account/settings')}
           >
-            Update Payment Method
+            Manage
           </Button>
-        )}
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={refresh}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

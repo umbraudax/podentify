@@ -60,6 +60,39 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        
+        // Custom semantic colors
+        text: {
+          primary: 'hsl(var(--text-primary))',
+          secondary: 'hsl(var(--text-secondary))',
+          tertiary: 'hsl(var(--text-tertiary))',
+          inverse: 'hsl(var(--text-inverse))',
+        },
+        surface: {
+          primary: 'hsl(var(--surface-primary))',
+          secondary: 'hsl(var(--surface-secondary))',
+          tertiary: 'hsl(var(--surface-tertiary))',
+          inverse: 'hsl(var(--surface-inverse))',
+        },
+        brand: {
+          primary: 'hsl(var(--brand-primary))',
+          secondary: 'hsl(var(--brand-secondary))',
+          tertiary: 'hsl(var(--brand-tertiary))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        error: {
+          DEFAULT: 'hsl(var(--error))',
+          foreground: 'hsl(var(--error-foreground))',
+        },
+        overlay: 'hsla(var(--overlay))',
+        'focus-ring': 'hsla(var(--focus-ring))',
       },
       keyframes: {
         'accordion-down': {
