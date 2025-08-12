@@ -105,13 +105,15 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', transcriptId);
 
-      await supabaseAdmin
-        .from('episodes')
-        .update({ 
-          status: 'failed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transcript.episode_id);
+      if (transcript?.episode_id) {
+        await supabaseAdmin
+          .from('episodes')
+          .update({ 
+            status: 'failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', transcript.episode_id);
+      }
 
       return NextResponse.json({ 
         error: 'Insufficient credits for transcription',
@@ -177,15 +179,21 @@ export async function POST(request: NextRequest) {
 
     // Update episode status to completed
     console.log('🔄 Updating episode status to completed...');
-    const { data: episodeUpdateData, error: episodeUpdateError } = await supabaseAdmin
-      .from('episodes')
-      .update({ 
-        status: 'completed',
-        duration: Math.round(transcriptResponse.audio_duration || 0),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transcript.episode_id)
-      .select();
+    let episodeUpdateData: any = null;
+    let episodeUpdateError: any = null;
+    if (transcript?.episode_id) {
+      const res = await supabaseAdmin
+        .from('episodes')
+        .update({ 
+          status: 'completed',
+          duration: Math.round(transcriptResponse.audio_duration || 0),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transcript.episode_id)
+        .select();
+      episodeUpdateData = res.data;
+      episodeUpdateError = res.error;
+    }
 
     if (episodeUpdateError) {
       console.error('❌ Failed to update episode:', episodeUpdateError);
