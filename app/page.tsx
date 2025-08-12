@@ -5,8 +5,8 @@ import ShowNotesFeature from '@/components/ShowNotesFeature';
 import SocialSnippetsFeature from '@/components/SocialSnippetsFeature';
 import HowItWorksSection from '@/components/HowItWorksSection';
 import PricingSection from '@/components/PricingSection';
-import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
+import ScrollToTopButton from '@/components/ScrollToTopButton';
 
 export default function Home() {
   return (
@@ -18,8 +18,8 @@ export default function Home() {
       <SocialSnippetsFeature />
       <HowItWorksSection />
       <PricingSection />
-      <CTASection />
       <Footer />
+      <ScrollToTopButton />
     </main>
   );
 }

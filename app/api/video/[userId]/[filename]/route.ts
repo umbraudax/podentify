@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
 import { createClient } from '@supabase/supabase-js';
-import { getMimeType } from '@/lib/utils';
 
 // Create a Supabase client with service role for server operations
 const supabaseAdmin = createClient(
@@ -21,17 +17,7 @@ export async function GET(
     let user = null;
     
     // Try multiple authentication methods
-    // 1. Check URL query parameter first (for video element requests)
-    const url = new URL(request.url);
-    const tokenParam = url.searchParams.get('token');
-    if (tokenParam) {
-      const { data: { user: paramUser }, error: paramError } = await supabaseAdmin.auth.getUser(tokenParam);
-      if (!paramError && paramUser) {
-        user = paramUser;
-      }
-    }
-    
-    // 2. Check Authorization header
+    // 1. Check Authorization header
     if (!user) {
       const authHeader = request.headers.get('authorization');
       if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -43,7 +29,7 @@ export async function GET(
       }
     }
     
-    // 3. Check all possible cookie formats if no auth header or token param
+    // 2. Check all possible cookie formats if no auth header
     if (!user) {
       const cookieHeader = request.headers.get('cookie');
       const cookies = new Map<string, string>();
@@ -96,11 +82,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if the user is authorized to access this file
-    // Either they own the file or have access through episode sharing
+    // Authorize and fetch storage key
     const { data: episode, error: episodeError } = await supabaseAdmin
       .from('episodes')
-      .select('user_id')
+      .select('user_id, storage_key')
       .eq('audio_url', `/api/video/${userId}/${filename}`)
       .single();
 
@@ -113,58 +98,22 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Construct file path
-    const filePath = path.join(process.cwd(), 'uploads', userId, filename);
-    
-    // Check if file exists
-    if (!existsSync(filePath)) {
+    if (!episode.storage_key) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
 
-    // Read file
-    const fileBuffer = await readFile(filePath);
-    
-    // Determine content type based on file extension
-    const contentType = getMimeType(filename);
-
-    // Handle range requests for video streaming
-    const range = request.headers.get('range');
-    
-    if (range) {
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileBuffer.length - 1;
-      const chunksize = (end - start) + 1;
-      const chunk = fileBuffer.slice(start, end + 1);
-      
-      return new NextResponse(chunk, {
-        status: 206,
-        headers: {
-          'Content-Range': `bytes ${start}-${end}/${fileBuffer.length}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize.toString(),
-          'Content-Type': contentType,
-          'Cache-Control': 'private, max-age=3600',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-          'Access-Control-Allow-Headers': 'Range, Authorization, Content-Type',
-        },
+    const { data: signed, error: signedErr } = await supabaseAdmin.storage
+      .from('user-uploads')
+      .createSignedUrl(episode.storage_key, 60 * 10, {
+        download: filename,
       });
+
+    if (signedErr || !signed?.signedUrl) {
+      console.error('Failed to create signed URL:', signedErr);
+      return NextResponse.json({ error: 'Failed to sign media URL' }, { status: 500 });
     }
 
-    // Return full file with proper headers
-    return new NextResponse(fileBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': fileBuffer.length.toString(),
-        'Cache-Control': 'private, max-age=3600', // Cache for 1 hour
-        'Accept-Ranges': 'bytes',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-        'Access-Control-Allow-Headers': 'Range, Authorization, Content-Type',
-      },
-    });
+    return NextResponse.redirect(signed.signedUrl, 302);
 
   } catch (error) {
     console.error('File serving error:', error);
@@ -173,10 +122,11 @@ export async function GET(
 }
 
 export async function OPTIONS(request: NextRequest) {
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
       'Access-Control-Allow-Headers': 'Range, Authorization, Content-Type',
     },

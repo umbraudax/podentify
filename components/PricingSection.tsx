@@ -109,10 +109,10 @@ export default function PricingSection() {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Free Plan */}
-          <Card className="border-2 border-border hover:border-gray-300 transition-colors relative">
+          <Card className="border-2 border-border hover:border-muted transition-colors relative">
             <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Mic className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Mic className="w-6 h-6 text-foreground" />
               </div>
               <CardTitle className="text-2xl font-bold text-text-primary">Basic</CardTitle>
               <div className="text-4xl font-bold text-text-primary mt-4">
@@ -192,21 +192,21 @@ export default function PricingSection() {
             </CardContent>
           </Card>
 
-          {/* Ultra Plan */}
-          <Card className="border-2 border-purple-500 hover:border-purple-600 transition-colors relative bg-gradient-to-b from-purple-50 to-white">
+          {/* Ultra Plan (Coming Soon) */}
+          <Card className="border-2 border-purple-500/60 transition-colors relative bg-surface-primary">
             <CardHeader className="text-center pb-8">
               <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <CardTitle className="text-2xl font-bold text-text-primary">Ultra</CardTitle>
-              <div className="text-4xl font-bold text-text-primary mt-4">
+              <div className="text-4xl font-bold text-text-primary mt-4 opacity-60">
                 $29.99
                 <span className="text-lg font-normal text-text-secondary">/month</span>
               </div>
-              <p className="text-text-secondary">For power users</p>
+              <p className="text-text-secondary">Premium plan launching soon</p>
             </CardHeader>
             <CardContent className="space-y-6">
-              <ul className="space-y-3">
+              <ul className="space-y-3 opacity-80">
                 {stripeProducts[1].features.map((feature, index) => (
                   <li key={index} className="flex items-center space-x-3">
                     <Check className="w-5 h-5 text-success flex-shrink-0" />
@@ -214,23 +214,13 @@ export default function PricingSection() {
                   </li>
                 ))}
               </ul>
-              {currentPlan === 'Ultra' ? (
-                <Button 
-                  className="w-full bg-success hover:bg-success/90"
-                  onClick={handleManageSubscription}
-                >
-                  Manage Subscription
-                </Button>
-              ) : (
-                <Button 
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => handleSubscribe(stripeProducts[1].priceId)}
-                  disabled={loading === stripeProducts[1].priceId}
-                >
-                  {loading === stripeProducts[1].priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Upgrade to Ultra
-                </Button>
-              )}
+              <Button 
+                className="w-full bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300 opacity-70 cursor-not-allowed"
+                disabled
+                aria-disabled="true"
+              >
+                Coming Soon
+              </Button>
             </CardContent>
           </Card>
         </div>

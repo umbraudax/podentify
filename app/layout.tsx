@@ -1,47 +1,20 @@
-'use client';
-
 import { Inter } from 'next/font/google';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { usePreferences } from '@/hooks/usePreferences';
-import { useEffect, useState } from 'react';
+import ClientThemeProvider from '@/components/ClientThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
-function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { preferences, loading } = usePreferences();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    
-    // Check for stored theme preference or user preferences from database
-    const initializeTheme = () => {
-      if (!loading && preferences) {
-        // Use user preferences from database (this takes priority)
-        if (preferences.dark_mode) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.classList.remove('light');
-        } else {
-          document.documentElement.classList.add('light');
-          document.documentElement.classList.remove('dark');
-        }
-      } else {
-        // No user preference, let CSS media query handle system preference
-        document.documentElement.classList.remove('dark', 'light');
-      }
-    };
-
-    initializeTheme();
-  }, [preferences, loading]);
-
-  // Prevent flash of incorrect theme
-  if (!mounted) {
-    return <div style={{ visibility: 'hidden' }}>{children}</div>;
-  }
-
-  return <>{children}</>;
-}
+export const metadata: Metadata = {
+  title: {
+    default: 'Podentify',
+    template: '%s - Podentify',
+  },
+  icons: {
+    icon: '/podentify-logo.png',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -55,21 +28,40 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                // Let the CSS media query handle initial theme detection
-                // The React component will override this with user preferences when loaded
-                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (systemPrefersDark) {
+                // Temporarily disable transitions to prevent flicker
+                document.documentElement.classList.add('no-theme-transition');
+
+                // Prefer explicit theme cookie, then localStorage 'theme', then legacy 'darkMode'
+                var cookieMatch = document.cookie.match(/(?:^|; )theme=([^;]*)/);
+                var cookieTheme = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+                var storedTheme = null;
+                try { storedTheme = localStorage.getItem('theme'); } catch (e) {}
+                var legacyDark = null;
+                try { legacyDark = localStorage.getItem('darkMode'); } catch (e) {}
+                var theme = cookieTheme || storedTheme || (legacyDark === 'true' ? 'dark' : 'light');
+                document.documentElement.classList.remove('dark','light');
+                if (theme === 'dark') {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
+                } else {
+                  // Default to light for signed-out or unknown
+                  document.documentElement.classList.add('light');
+                  document.documentElement.style.colorScheme = 'light';
                 }
+
+                // Re-enable transitions on next frame
+                requestAnimationFrame(function() {
+                  document.documentElement.classList.remove('no-theme-transition');
+                });
               } catch (e) {}
             `,
           }}
         />
       </head>
       <body className={`${inter.className} bg-surface-primary text-text-primary transition-all duration-300 ease-in-out`}>
-        <ThemeProvider>
+        <ClientThemeProvider>
           {children}
-        </ThemeProvider>
+        </ClientThemeProvider>
         <Toaster />
       </body>
     </html>

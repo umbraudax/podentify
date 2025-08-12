@@ -1,13 +1,13 @@
 'use client';
 
 import { Mic, Twitter, Linkedin, Mail } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   const navigation = {
     product: [
       { name: 'Features', href: '#features' },
       { name: 'Pricing', href: '#pricing' },
-      { name: 'Demo', href: '#demo' },
       { name: 'API', href: '#api' }
     ],
     company: [
@@ -37,20 +37,18 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-surface-inverse text-text-inverse">
       <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
         {/* Main Footer Content */}
         <div className="grid lg:grid-cols-6 gap-12 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
-                <Mic className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-white">Podentify</span>
+              <Image src="/podentify-logo.png" alt="Podentify logo" width={40} height={40} className="w-10 h-10" />
+              <span className="text-2xl font-bold text-text-inverse">Podentify</span>
             </div>
             
-            <p className="text-gray-400 leading-relaxed max-w-md">
+            <p className="text-text-inverse/70 leading-relaxed max-w-md">
               Transform your podcast workflow with AI-powered show notes and social media clips. Save hours, boost reach, engage new audiences.
             </p>
 
@@ -59,9 +57,9 @@ export default function Footer() {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors group"
+                  className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/15 transition-colors group"
                 >
-                  <item.icon className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                  <item.icon className="w-5 h-5 text-white/70 group-hover:text-white" />
                 </a>
               ))}
             </div>
@@ -69,7 +67,7 @@ export default function Footer() {
 
           {/* Navigation Columns */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Product</h3>
+            <h3 className="text-text-inverse font-semibold mb-4">Product</h3>
             <ul className="space-y-3">
               {navigation.product.map((item) => (
                 <li key={item.name}>
@@ -85,7 +83,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-text-inverse font-semibold mb-4">Company</h3>
             <ul className="space-y-3">
               {navigation.company.map((item) => (
                 <li key={item.name}>
@@ -101,7 +99,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Support</h3>
+            <h3 className="text-text-inverse font-semibold mb-4">Support</h3>
             <ul className="space-y-3">
               {navigation.support.map((item) => (
                 <li key={item.name}>
@@ -117,7 +115,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Legal</h3>
+            <h3 className="text-text-inverse font-semibold mb-4">Legal</h3>
             <ul className="space-y-3">
               {navigation.legal.map((item) => (
                 <li key={item.name}>
@@ -136,14 +134,14 @@ export default function Footer() {
 
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-gray-400 text-sm">
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <p className="text-white/70 text-sm">
             © 2025 Podentify. All rights reserved.
           </p>
           
-          <div className="flex items-center space-x-6 text-sm text-gray-400">
+          <div className="flex items-center space-x-6 text-sm text-white/70">
             <span>Made with ❤️ for podcasters</span>
-            <div className="w-px h-4 bg-gray-700"></div>
+            <div className="w-px h-4 bg-white/20"></div>
             <span>🚀 Powered by AI</span>
           </div>
         </div>

@@ -54,10 +54,10 @@ export default function SocialClipsSection({
   };
 
   const getEngagementColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-800 border-green-200';
-    if (score >= 60) return 'bg-blue-100 text-blue-800 border-blue-200';
-    if (score >= 40) return 'bg-purple-100 text-purple-800 border-purple-200';
-    return 'bg-gray-100 text-gray-800 border-gray-200';
+    if (score >= 80) return 'bg-green-500/10 text-green-600 border-green-500/20';
+    if (score >= 60) return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+    if (score >= 40) return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+    return 'bg-surface-secondary text-text-secondary border-border';
   };
 
   const getEngagementLabel = (score: number) => {
@@ -99,7 +99,7 @@ export default function SocialClipsSection({
 
   if (clips.length === 0 && !isGenerating) {
     return (
-      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+      <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-purple-600" />
@@ -108,11 +108,11 @@ export default function SocialClipsSection({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <TrendingUp className="w-12 h-12 mx-auto mb-4 text-text-tertiary" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               No Social Clips Yet
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-text-secondary mb-6 max-w-md mx-auto">
               Generate AI-powered viral clips perfect for TikTok, Instagram Reels, and Twitter
             </p>
             <Button 
@@ -125,7 +125,7 @@ export default function SocialClipsSection({
               Generate Social Clips
             </Button>
             {disabled && (
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-sm text-text-tertiary mt-3">
                 Please wait for transcript to complete before generating clips
               </p>
             )}
@@ -137,7 +137,7 @@ export default function SocialClipsSection({
 
   if (isGenerating) {
     return (
-      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+      <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-purple-600" />
@@ -146,11 +146,11 @@ export default function SocialClipsSection({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-purple-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-brand-primary" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               Generating Social Clips
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-text-secondary">
               AI is identifying the most engaging moments from your content...
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function SocialClipsSection({
   }
 
   return (
-    <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+    <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -185,12 +185,12 @@ export default function SocialClipsSection({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                      className="bg-surface-secondary rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                       onMouseEnter={() => setHoveredClip(clip.id)}
                       onMouseLeave={() => setHoveredClip(null)}
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1 mr-4">
+                        <h4 className="font-semibold text-text-primary flex-1 mr-4">
                           {clip.title}
                         </h4>
                         <Badge 
@@ -203,7 +203,7 @@ export default function SocialClipsSection({
                       
                       {/* Waveform Visualization */}
                       <div className="mb-4">
-                        <div className="flex items-center space-x-1 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
+                        <div className="flex items-center space-x-1 h-12 bg-surface-primary rounded-lg p-2">
                           {Array.from({ length: 40 }).map((_, i) => {
                             const progress = (currentTime - clip.start_time) / (clip.end_time - clip.start_time);
                             const isActive = isCurrentlyPlaying && i / 40 <= progress;
@@ -216,7 +216,7 @@ export default function SocialClipsSection({
                                     ? clip.engagement_score && clip.engagement_score >= 80 ? 'bg-green-500' :
                                       clip.engagement_score && clip.engagement_score >= 60 ? 'bg-blue-500' :
                                       'bg-purple-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
+                                    : 'bg-muted'
                                 }`}
                                 style={{ 
                                   height: `${Math.random() * 32 + 8}px`,
@@ -230,7 +230,7 @@ export default function SocialClipsSection({
 
                       <div className="flex items-center justify-between">
                         {/* Time info */}
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="text-sm text-text-secondary">
                           <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-1">
                               <Clock className="w-3 h-3" />
@@ -264,7 +264,7 @@ export default function SocialClipsSection({
                           </Button>
                           <Button 
                             size="sm" 
-                            className="h-8 px-3 bg-blue-600 hover:bg-blue-700"
+                            className="h-8 px-3 bg-brand-primary hover:bg-brand-primary/90"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDownload(clip.id, clip.title);
@@ -282,7 +282,7 @@ export default function SocialClipsSection({
                       </div>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-md">
+                  <TooltipContent side="top" className="max-w-md bg-surface-tertiary text-text-primary border-border">
                     <div>
                       <div className="font-medium mb-2">{clip.title}</div>
                       <div className="text-sm opacity-90 mb-2">
@@ -305,7 +305,7 @@ export default function SocialClipsSection({
 
         {/* Generate more button */}
         {clips.length > 0 && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+          <div className="pt-4 border-t border-border mt-4">
             <Button 
               variant="outline" 
               onClick={onGenerateMoreClips || onGenerateClips}
@@ -316,7 +316,7 @@ export default function SocialClipsSection({
               Generate More Clips (2 Credits)
             </Button>
             {disabled && (
-              <p className="text-sm text-gray-500 mt-2 text-center">
+              <p className="text-sm text-text-tertiary mt-2 text-center">
                 Please wait for transcript to complete before generating more clips
               </p>
             )}

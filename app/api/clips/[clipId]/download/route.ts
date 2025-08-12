@@ -52,21 +52,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if clip already exists
-    if (clip.clip_url) {
-      // Return existing clip
-      const clipPath = path.join(process.cwd(), clip.clip_url);
-      if (existsSync(clipPath)) {
-        const clipBuffer = await readFile(clipPath);
-        
-        return new NextResponse(clipBuffer, {
-          headers: {
-            'Content-Type': 'audio/mpeg',
-            'Content-Disposition': `attachment; filename="${clip.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3"`
-          }
-        });
-      }
-    }
+    // If a clip already exists locally, return it (temporary until moved to storage)
 
     // Generate new clip
     const isVideoSource = clip.episodes.media_type === 'video';

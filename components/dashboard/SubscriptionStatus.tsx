@@ -22,32 +22,32 @@ export default function SubscriptionStatus() {
       case 'Ultra':
         return {
           iconColor: 'text-purple-600',
-          cardBorder: 'border-purple-200',
-          cardBg: 'bg-purple-50',
-          titleColor: 'text-purple-800',
-          textColor: 'text-purple-700',
+          cardBorder: 'border-purple-500/30',
+          cardBg: 'bg-surface-primary',
+          titleColor: 'text-text-primary',
+          textColor: 'text-text-secondary',
           buttonBg: 'bg-purple-600',
           buttonHover: 'hover:bg-purple-700'
         };
       case 'Pro':
         return {
           iconColor: 'text-blue-600',
-          cardBorder: 'border-blue-200',
-          cardBg: 'bg-blue-50',
-          titleColor: 'text-blue-800',
-          textColor: 'text-blue-700',
+          cardBorder: 'border-blue-500/30',
+          cardBg: 'bg-surface-primary',
+          titleColor: 'text-text-primary',
+          textColor: 'text-text-secondary',
           buttonBg: 'bg-blue-600',
           buttonHover: 'hover:bg-blue-700'
         };
       default: // Basic/Free
         return {
-          iconColor: 'text-gray-600',
-          cardBorder: 'border-gray-200',
-          cardBg: 'bg-gray-50',
-          titleColor: 'text-gray-800',
-          textColor: 'text-gray-700',
-          buttonBg: 'bg-gray-600',
-          buttonHover: 'hover:bg-gray-700'
+          iconColor: 'text-text-tertiary',
+          cardBorder: 'border-border',
+          cardBg: 'bg-surface-primary',
+          titleColor: 'text-text-primary',
+          textColor: 'text-text-secondary',
+          buttonBg: 'bg-brand-primary',
+          buttonHover: 'hover:bg-brand-primary/90'
         };
     }
   };
@@ -55,7 +55,7 @@ export default function SubscriptionStatus() {
   if (!hasValidSubscription()) {
     const colors = getPlanColors(null);
     return (
-      <Card className={`${colors.cardBorder} ${colors.cardBg}`}>
+      <Card className={`border ${colors.cardBorder} ${colors.cardBg}`}>
         <CardHeader className="pb-3">
           <CardTitle className={`flex items-center space-x-2 ${colors.titleColor}`}>
             <Crown className={`w-5 h-5 ${colors.iconColor}`} />
@@ -79,7 +79,7 @@ export default function SubscriptionStatus() {
           </div>
           <Button 
             size="sm" 
-            className={`${colors.buttonBg} ${colors.buttonHover} w-full`}
+            className={`${colors.buttonBg} ${colors.buttonHover} text-primary-foreground w-full`}
             onClick={() => router.push('/#pricing')}
           >
             Upgrade to Pro
@@ -114,7 +114,7 @@ export default function SubscriptionStatus() {
   const colors = getPlanColors(planName);
 
   return (
-    <Card className={`${colors.cardBorder} ${colors.cardBg}`}>
+    <Card className={`border ${colors.cardBorder} ${colors.cardBg}`}>
       <CardHeader className="pb-3">
         <CardTitle className={`flex items-center justify-between ${colors.titleColor}`}>
           <div className="flex items-center space-x-2">
@@ -147,7 +147,7 @@ export default function SubscriptionStatus() {
         )}
 
         {willCancelAtPeriodEnd() && subscription?.current_period_end && (
-          <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+          <div className="text-sm text-error bg-error/10 p-2 rounded">
             Will cancel on {formatDate(subscription.current_period_end)}
           </div>
         )}

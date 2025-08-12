@@ -7,6 +7,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@stripe/stripe-js'],
   },
+  output: 'export'
 };
 
 module.exports = nextConfig;

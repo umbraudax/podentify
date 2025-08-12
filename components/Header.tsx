@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mic, Menu, X, User, LogOut, Settings } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -36,8 +37,7 @@ export default function Header() {
   const navigationItems = [
     { name: 'Features', href: '#features' },
     { name: 'How It Works', href: '#how-it-works' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'Demo', href: '#demo' }
+    { name: 'Pricing', href: '#pricing' }
   ];
 
   const scrollToSection = (href: string) => {
@@ -86,12 +86,27 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
-                <Mic className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-text-primary">Podentify</span>
-            </div>
+            <button
+              onClick={() => {
+                if (window.location.pathname === '/') {
+                  const el = document.querySelector('#top');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  router.push('/');
+                }
+              }}
+              className="flex space-x-1 items-center group"
+            >
+              <Image
+                src="/podentify-logo.png"
+                alt="Podentify logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+                priority
+              />
+              <span className="text-2xl font-bold text-text-primary group-hover:text-brand-primary transition-colors">Podentify</span>
+            </button>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
@@ -253,7 +268,7 @@ export default function Header() {
                       Sign In
                     </Button>
                     <Button 
-                      className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
+                      className="w-full bg-brand-primary hover:bg-brand-primary/90 text-primary-foreground font-semibold"
                       onClick={() => {
                         router.push('/auth/signup');
                         setIsMobileMenuOpen(false);

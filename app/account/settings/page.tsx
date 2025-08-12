@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { usePreferences } from '@/hooks/usePreferences';
-import { User, CreditCard, Bell, Shield, ExternalLink, Moon, Sun, Mic, ArrowLeft, Loader2 } from 'lucide-react';
+import { User, CreditCard, Bell, Shield, ExternalLink, Moon, Sun, ArrowLeft, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -211,11 +212,9 @@ export default function AccountSettings() {
               {/* Clickable Logo */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+                className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-white" />
-                </div>
+                <Image src="/podentify-logo.png" alt="Podentify logo" width={40} height={40} className="w-10 h-10" />
                 <span className="text-xl font-bold text-text-primary">Podentify</span>
               </button>
               <div className="border-l border-border h-8"></div>

@@ -29,6 +29,14 @@ export function useSubscription() {
       if (retryCount === 0) {
         setLoading(true);
         setError(null);
+        // Optimistically hydrate from cache to prevent UI flicker
+        try {
+          const cached = localStorage.getItem(`sub:${user.id}`);
+          if (cached) {
+            const parsed = JSON.parse(cached) as Subscription;
+            setSubscription(parsed);
+          }
+        } catch {}
       } else {
         setIsRetrying(true);
       }
@@ -103,9 +111,12 @@ export function useSubscription() {
           payment_method_last4: stripeSubscription.payment_method_last4,
         };
         setSubscription(processedSubscription);
+        // Cache latest subscription for fast reloads
+        try { localStorage.setItem(`sub:${user.id}`, JSON.stringify(processedSubscription)); } catch {}
       } else {
         // No valid subscription found
         setSubscription(null);
+        try { localStorage.removeItem(`sub:${user.id}`); } catch {}
       }
     } catch (err) {
       console.error('Error fetching subscription:', err);
@@ -123,6 +134,7 @@ export function useSubscription() {
     if (!user) {
       setSubscription(null);
       setLoading(false);
+      try { localStorage.removeItem('sub:null'); } catch {}
       return;
     }
 

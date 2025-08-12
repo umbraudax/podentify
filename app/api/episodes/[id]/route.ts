@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unlink } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
 // Create a Supabase client with service role for server operations
@@ -87,25 +85,17 @@ export async function DELETE(
       console.warn('Error deleting social clips:', clipsError);
     }
 
-    // 4. Delete the audio file from filesystem
-    if (episode.audio_url) {
+    // 4. Delete the media file from Supabase Storage if present
+    if (episode.storage_key) {
       try {
-        // Extract file path from URL (assuming format /api/audio/{userId}/{filename})
-        const urlParts = episode.audio_url.split('/');
-        const filename = urlParts[urlParts.length - 1];
-        const userId = urlParts[urlParts.length - 2];
-        
-        if (userId && filename) {
-          const filePath = path.join(process.cwd(), 'uploads', userId, filename);
-          
-          if (existsSync(filePath)) {
-            await unlink(filePath);
-            console.log(`Deleted audio file: ${filePath}`);
-          }
+        const { error: delErr } = await supabaseAdmin.storage
+          .from('user-uploads')
+          .remove([episode.storage_key]);
+        if (delErr) {
+          console.warn('Error deleting storage object:', delErr);
         }
       } catch (fileError) {
-        console.warn('Error deleting audio file:', fileError);
-        // Don't fail the entire operation if file deletion fails
+        console.warn('Error deleting storage object:', fileError);
       }
     }
 

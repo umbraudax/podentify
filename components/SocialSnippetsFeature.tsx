@@ -1,9 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Share2, TrendingUp, Zap, Download, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function SocialSnippetsFeature() {
+  const [waveHeights, setWaveHeights] = useState<number[]>(() => Array.from({ length: 40 }, () => 24));
+
+  useEffect(() => {
+    // Generate heights on client only to avoid SSR/CSR mismatch
+    const heights = Array.from({ length: 40 }, () => Math.random() * 32 + 8);
+    setWaveHeights(heights);
+  }, []);
   const benefits = [
     {
       icon: TrendingUp,
@@ -90,7 +98,7 @@ export default function SocialSnippetsFeature() {
                               : 'bg-text-tertiary'
                             }`}
                             style={{ 
-                              height: `${Math.random() * 32 + 8}px`,
+                              height: `${waveHeights[i] ?? 24}px`,
                               opacity: i >= 8 && i <= 25 ? 1 : 0.3
                             }}
                           />
@@ -140,11 +148,11 @@ export default function SocialSnippetsFeature() {
                 <span className="text-purple-600 font-semibold text-lg">Feature 2</span>
               </div>
               
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">
+              <h2 className="text-4xl lg:text-5xl font-bold text-text-primary">
                 Your Podcast&apos;s Best Moments, Ready to Share.
               </h2>
               
-              <p className="text-xl text-gray-600 leading-relaxed">
+              <p className="text-xl text-text-secondary leading-relaxed">
                 Never miss a viral moment. Podentify&apos;s AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
               </p>
             </div>
@@ -156,8 +164,8 @@ export default function SocialSnippetsFeature() {
                     <benefit.icon className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">{benefit.title}</h3>
-                    <p className="text-gray-600">{benefit.description}</p>
+                    <h3 className="font-bold text-text-primary text-lg">{benefit.title}</h3>
+                    <p className="text-text-secondary">{benefit.description}</p>
                   </div>
                 </div>
               ))}

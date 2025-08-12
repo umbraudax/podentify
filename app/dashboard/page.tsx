@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileAudio, Plus, Settings, User, LogOut, Mic, Clock, Play, Trash2, MoreVertical, Coins, Video } from 'lucide-react';
+import { Upload, FileAudio, Plus, Settings, User, LogOut, Clock, Play, Trash2, MoreVertical, Coins, Video } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -176,7 +177,7 @@ export default function Dashboard() {
       formData.append('file', file);
       formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove extension for title
       
-      // Upload file
+      // Upload file to server which uploads to Supabase Storage
       const response = await fetch('/api/upload', {
         method: 'POST',
         headers: {
@@ -246,11 +247,9 @@ export default function Dashboard() {
               {/* Clickable Logo */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+                className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-white" />
-                </div>
+                <Image src="/podentify-logo.png" alt="Podentify logo" width={40} height={40} className="w-10 h-10" />
                 <span className="text-xl font-bold text-text-primary">Podentify</span>
               </button>
               <div className="border-l border-border h-8"></div>
@@ -272,7 +271,7 @@ export default function Dashboard() {
                         <div className="text-sm">
                           {creditsLoading ? (
                             <div className="flex items-center space-x-1">
-                              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                              <div className="w-4 h-4 border-2 border-border border-t-brand-primary rounded-full animate-spin"></div>
                               <span className="text-text-secondary">Loading...</span>
                             </div>
                           ) : credits ? (
@@ -326,7 +325,7 @@ export default function Dashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="flex items-center space-x-2 border-border hover:border-brand-primary">
                     <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+                      <User className="w-4 h-4 text-primary-foreground" />
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-text-primary font-medium">{userDisplayName}</span>
@@ -548,7 +547,7 @@ export default function Dashboard() {
               >
                 {isDeleting ? (
                   <>
-                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground/60 border-t-transparent"></div>
                     Deleting...
                   </>
                 ) : (

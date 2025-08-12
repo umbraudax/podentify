@@ -132,19 +132,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: 'Analysis completed',
       chapters: analysisResult.chapters,
       social_clips: analysisResult.social_clips
     });
+    res.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
+    res.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    return res;
 
   } catch (error) {
     console.error('Error in analyze API:', error);
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Failed to analyze transcript' },
       { status: 500 }
     );
+    res.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
+    res.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    return res;
   }
 }
 
@@ -197,16 +203,22 @@ export async function GET(request: NextRequest) {
         .order('engagement_score', { ascending: false })
     ]);
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       chapters: chapters || [],
       social_clips: social_clips || []
     });
+    res.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
+    res.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    return res;
 
   } catch (error) {
     console.error('Error in analyze GET API:', error);
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Failed to fetch analysis' },
       { status: 500 }
     );
+    res.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
+    res.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    return res;
   }
 } 

@@ -27,7 +27,7 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="bg-surface-primary min-h-screen flex items-center justify-center px-4 py-20 pt-32">
+      <section id="top" className="bg-surface-primary min-h-screen flex items-center justify-center px-4 py-20 pt-32">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}

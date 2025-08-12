@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import { existsSync } from 'fs';
+import { unlink } from 'fs/promises';
 import path from 'path';
-import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { isValidMediaFile, getMediaType, isValidFileSize } from '@/lib/utils';
 import { MEDIA_TYPES } from '@/lib/constants';
 import { getUserCredits, hasEnoughCredits } from '@/lib/credit-service';
-import ffmpeg from 'fluent-ffmpeg';
+import { fileTypeFromBuffer } from 'file-type';
 
 // Create a Supabase client with service role for server operations
 const supabaseAdmin = createClient(
@@ -79,22 +77,24 @@ export async function POST(request: NextRequest) {
       }, { status: 402 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'uploads', user.id);
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
+    // Read file bytes and validate MIME by magic bytes (not just extension)
+    const bytes = await file.arrayBuffer();
+    const fullBuffer = Buffer.from(bytes);
+    const detected = await fileTypeFromBuffer(fullBuffer).catch(() => null);
+    if (!detected) {
+      return NextResponse.json({ error: 'Unable to detect file type' }, { status: 400 });
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const extension = path.extname(file.name);
-    const filename = `${timestamp}-${Math.random().toString(36).substring(2)}${extension}`;
-    const filepath = path.join(uploadsDir, filename);
+    const allowedMimePrefixes = ['audio/', 'video/'];
+    if (!allowedMimePrefixes.some((p) => detected.mime.startsWith(p))) {
+      return NextResponse.json({ error: `Unsupported MIME type: ${detected.mime}` }, { status: 400 });
+    }
 
-    // Write file to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = new Uint8Array(bytes);
-    await writeFile(filepath, buffer);
+    // Generate storage object key within private bucket
+    const timestamp = Date.now();
+    const randomPart = Math.random().toString(36).substring(2);
+    const extension = path.extname(file.name) || `.${detected.ext}`;
+    const objectKey = `${user.id}/${timestamp}-${randomPart}${extension}`;
 
     // Ensure profile exists (safety check)
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -119,14 +119,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create episode record in database
+    // Upload to Supabase Storage private bucket
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('user-uploads')
+      .upload(objectKey, fullBuffer, {
+        contentType: detected.mime,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return NextResponse.json({ error: 'Failed to upload to storage' }, { status: 500 });
+    }
+
+    // Create episode record in database with storage key
     const { data: episode, error: dbError } = await supabaseAdmin
       .from('episodes')
       .insert({
         user_id: user.id,
         title: title || file.name.replace(extension, ''),
         description: description || null,
-        audio_url: mediaType === MEDIA_TYPES.VIDEO ? `/api/video/${user.id}/${filename}` : `/api/audio/${user.id}/${filename}`,
+        audio_url: mediaType === MEDIA_TYPES.VIDEO 
+          ? `/api/video/${user.id}/${timestamp}-${randomPart}${extension}`
+          : `/api/audio/${user.id}/${timestamp}-${randomPart}${extension}`,
+        storage_key: objectKey,
         media_type: mediaType,
         status: 'uploading'
       })
@@ -141,8 +157,8 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Start transcription process
-    startTranscriptionProcess(episode.id, filepath, user.id, mediaType);
+    // Start transcription process from storage (object key)
+    startTranscriptionProcess(episode.id, objectKey, user.id, mediaType);
 
     return NextResponse.json({ 
       message: 'File uploaded successfully',
@@ -195,32 +211,6 @@ async function startTranscriptionProcess(episodeId: string, filePath: string, us
 }
 
 async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: string, userId: string, mediaType: string) {
-  let audioFilePath = filePath;
-  let shouldCleanup = false;
-
-  try {
-    // If it's a video file, extract audio for transcription
-    if (mediaType === MEDIA_TYPES.VIDEO) {
-      const audioExtractPath = filePath.replace(path.extname(filePath), '_audio.wav');
-      
-      await new Promise<void>((resolve, reject) => {
-        ffmpeg(filePath)
-          .output(audioExtractPath)
-          .audioCodec('pcm_s16le') // Uncompressed WAV for best transcription quality
-          .format('wav')
-          .on('end', () => resolve())
-          .on('error', (err) => reject(err))
-          .run();
-      });
-
-      audioFilePath = audioExtractPath;
-      shouldCleanup = true;
-      console.log(`Audio extracted from video: ${audioExtractPath}`);
-    }
-  } catch (error) {
-    console.error('Error extracting audio from video:', error);
-    throw error;
-  }
   try {
     // Ensure we have the required environment variable
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -236,9 +226,9 @@ async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: s
       },
       body: JSON.stringify({
         transcriptId,
-        filePath: audioFilePath,
+        filePath,
         userId,
-        shouldCleanup
+        shouldCleanup: false
       })
     });
 
@@ -250,16 +240,6 @@ async function processTranscriptWithAssemblyAI(transcriptId: string, filePath: s
     console.log(`Successfully started transcription for transcript ${transcriptId}`);
   } catch (error) {
     console.error('Error calling transcription API:', error);
-    
-    // Clean up extracted audio file if there was an error
-    if (shouldCleanup && audioFilePath !== filePath) {
-      try {
-        await unlink(audioFilePath);
-        console.log(`Cleaned up extracted audio file: ${audioFilePath}`);
-      } catch (cleanupError) {
-        console.error('Error cleaning up extracted audio:', cleanupError);
-      }
-    }
     
     // Update transcript status to failed
     await supabaseAdmin

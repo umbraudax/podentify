@@ -44,14 +44,14 @@ export default function ChaptersSection({
 
   if (chapters.length === 0 && !isGenerating) {
     return (
-      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+      <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
         <CardContent className="p-6">
           <div className="text-center">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <BookOpen className="w-12 h-12 mx-auto mb-4 text-text-tertiary" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               No Chapters Yet
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-text-secondary mb-4">
               Generate AI-powered chapters to help listeners navigate your content
             </p>
             <Button 
@@ -63,7 +63,7 @@ export default function ChaptersSection({
               Generate Chapters
             </Button>
             {disabled && (
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-sm text-text-tertiary mt-3">
                 Please wait for transcript to complete before generating chapters
               </p>
             )}
@@ -75,14 +75,14 @@ export default function ChaptersSection({
 
   if (isGenerating) {
     return (
-      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+      <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
         <CardContent className="p-6">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-brand-primary" />
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               Generating Chapters
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-text-secondary">
               AI is analyzing your content to create meaningful chapters...
             </p>
           </div>
@@ -92,7 +92,7 @@ export default function ChaptersSection({
   }
 
   return (
-    <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+    <Card className="bg-surface-primary/90 backdrop-blur-sm border border-border shadow-xl">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -119,8 +119,8 @@ export default function ChaptersSection({
                         isActive 
                           ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-l-4 border-blue-500' 
                           : isHovered
-                            ? 'bg-gray-50 dark:bg-gray-700/50'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                            ? 'bg-surface-secondary'
+                            : 'hover:bg-surface-secondary'
                       }`}
                       onMouseEnter={() => setHoveredChapter(chapter.id)}
                       onMouseLeave={() => setHoveredChapter(null)}
@@ -129,10 +129,10 @@ export default function ChaptersSection({
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            <span className="text-xs font-medium text-text-tertiary">
                               Chapter {index + 1}
                             </span>
-                            <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center space-x-1 text-xs text-text-tertiary">
                               <Clock className="w-3 h-3" />
                               <span>
                                 {formatTime(chapter.start_time)} - {formatTime(chapter.end_time)}
@@ -142,12 +142,12 @@ export default function ChaptersSection({
                           <h4 className={`font-medium leading-snug mb-1 ${
                             isActive 
                               ? 'text-blue-700 dark:text-blue-300' 
-                              : 'text-gray-900 dark:text-gray-100'
+                              : 'text-text-primary'
                           }`}>
                             {chapter.title}
                           </h4>
                           {chapter.summary && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                            <p className="text-sm text-text-secondary line-clamp-2">
                               {chapter.summary}
                             </p>
                           )}
@@ -178,7 +178,7 @@ export default function ChaptersSection({
                       {/* Progress bar for current chapter */}
                       {isActive && (
                         <div className="mt-2">
-                          <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div className="w-full h-1 bg-surface-secondary rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
                               style={{
@@ -210,7 +210,7 @@ export default function ChaptersSection({
         </div>
         
         {chapters.length > 0 && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-t border-border">
             <Button 
               variant="outline" 
               size="sm" 
@@ -222,7 +222,7 @@ export default function ChaptersSection({
               Regenerate Chapters
             </Button>
             {disabled && (
-              <p className="text-sm text-gray-500 mt-2 text-center">
+              <p className="text-sm text-text-tertiary mt-2 text-center">
                 Please wait for transcript to complete before regenerating chapters
               </p>
             )}

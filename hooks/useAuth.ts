@@ -85,14 +85,23 @@ export function useAuth() {
     
     // Reset theme to light mode before signing out
     document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
     
     // Clear all theme-related localStorage to ensure fresh start
     try {
       localStorage.removeItem('darkMode');
       localStorage.removeItem('theme');
+      // Remove any per-user cached theme mapping
+      const userId = user?.id;
+      if (userId) {
+        localStorage.removeItem(`user-theme:${userId}` as const);
+      }
+      localStorage.removeItem('theme');
       // Also clear any other potential theme keys
       localStorage.removeItem('color-scheme');
       localStorage.removeItem('theme-preference');
+      // Clear theme cookie
+      document.cookie = 'theme=; path=/; max-age=0; samesite=lax';
     } catch (err) {
       console.error('Error clearing theme from localStorage:', err);
     }

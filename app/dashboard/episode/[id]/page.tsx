@@ -27,12 +27,12 @@ import {
   Users,
   Trash2,
   AlertCircle,
-  Mic,
   User,
   LogOut,
   Settings,
   Coins
 } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { Episode, Transcript, TranscriptWord, Chapter, SocialClip } from '@/lib/types';
 import ChaptersSection from '@/components/dashboard/ChaptersSection';
@@ -83,13 +83,33 @@ export default function EpisodeProcessingPage() {
   const [hoveredWordIndex, setHoveredWordIndex] = useState<number | null>(null);
   const [currentWordIndex, setCurrentWordIndex] = useState<number | null>(null);
 
-  // Create authenticated audio URL
-  const authenticatedAudioUrl = episode?.audio_url && session?.access_token 
-    ? `${episode.audio_url}?token=${session.access_token}`
-    : episode?.audio_url;
+  // Signed media URL fetched from server
+  const [mediaUrl, setMediaUrl] = useState<string | undefined>(undefined);
 
   // Check if transcript is ready for generating chapters/clips
   const isTranscriptReady = transcript?.status === 'completed';
+
+  useEffect(() => {
+    // Fetch a short‑lived signed media URL when we have an episode and session
+    const fetchSignedUrl = async () => {
+      try {
+        if (!episode?.id || !session?.access_token) return;
+        const res = await fetch(`/api/media-url/${episode.id}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) {
+          console.error('Failed to fetch signed media URL');
+          return;
+        }
+        const data = await res.json();
+        setMediaUrl(data.url);
+      } catch (e) {
+        console.error('Error fetching signed media URL:', e);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [episode?.id, session?.access_token]);
 
   useEffect(() => {
     console.log('🔄 Initial useEffect triggered:', {
@@ -423,7 +443,7 @@ export default function EpisodeProcessingPage() {
 
   const handleAudioError = (error: string) => {
     console.error('Media loading error:', error);
-    console.error('Media source:', authenticatedAudioUrl);
+    console.error('Media source:', mediaUrl);
     setAudioError(error);
     setAudioLoaded(false);
   };
@@ -496,7 +516,7 @@ export default function EpisodeProcessingPage() {
   };
 
   const getSpeakerColor = (speaker?: string) => {
-    if (!speaker) return 'text-gray-700 dark:text-gray-300';
+    if (!speaker) return 'text-text-secondary';
     
     const colors = [
       'text-blue-600 dark:text-blue-400',
@@ -514,7 +534,7 @@ export default function EpisodeProcessingPage() {
   };
 
   const getSpeakerBackgroundColor = (speaker?: string) => {
-    if (!speaker) return 'bg-gray-100 dark:bg-gray-800';
+    if (!speaker) return 'bg-surface-secondary';
     
     const colors = [
       'bg-blue-50 dark:bg-blue-900/20',
@@ -747,7 +767,7 @@ export default function EpisodeProcessingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-brand-primary border-t-transparent mx-auto mb-4"></div>
           <p className="text-text-secondary">Loading episode...</p>
         </div>
       </div>
@@ -786,11 +806,9 @@ export default function EpisodeProcessingPage() {
               {/* Clickable Logo */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+                className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-white" />
-                </div>
+                <Image src="/podentify-logo.png" alt="Podentify logo" width={40} height={40} className="w-10 h-10" />
                 <span className="text-xl font-bold text-text-primary">Podentify</span>
               </button>
             </div>
@@ -805,7 +823,7 @@ export default function EpisodeProcessingPage() {
                         <div className="text-sm">
                           {creditsLoading ? (
                             <div className="flex items-center space-x-1">
-                              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                              <div className="w-4 h-4 border-2 border-border border-t-brand-primary rounded-full animate-spin"></div>
                               <span className="text-text-secondary">Loading...</span>
                             </div>
                           ) : credits ? (
@@ -955,10 +973,10 @@ export default function EpisodeProcessingPage() {
           {/* Left Column - Media Player & Chapters */}
           <div className="xl:col-span-1 space-y-6">
             {/* Media Player */}
-            {authenticatedAudioUrl && (
+            {mediaUrl && (
               <MediaPlayer
                 ref={mediaPlayerRef}
-                src={authenticatedAudioUrl}
+                src={mediaUrl}
                 mediaType={episode?.media_type === 'video' ? 'video' : 'audio'}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}

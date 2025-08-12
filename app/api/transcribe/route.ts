@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFile, unlink } from 'fs/promises';
 import { deductCredits, calculateTranscriptionCredits } from '@/lib/credit-service';
 import { existsSync } from 'fs';
+import { createClient as createSbClient } from '@supabase/supabase-js';
 
 // Create a Supabase client with service role for server operations
 const supabaseAdmin = createClient(
@@ -42,7 +43,27 @@ export async function POST(request: NextRequest) {
     transcript = transcriptData;
 
     // Read the audio file
-    const audioData = await readFile(filePath);
+    let audioData: Buffer;
+    if (filePath.startsWith('uploads/') || filePath.startsWith('/') || filePath.includes('uploads/')) {
+      // Backward compatibility: local path used earlier; if exists, read from disk
+      if (existsSync(filePath)) {
+        audioData = await readFile(filePath);
+      } else {
+        // Otherwise, treat as storage key
+        const storage = createSbClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+        const { data, error } = await storage.storage.from('user-uploads').download(filePath);
+        if (error || !data) throw error || new Error('Failed to download from storage');
+        const arr = await data.arrayBuffer();
+        audioData = Buffer.from(arr);
+      }
+    } else {
+      // Treat as storage key
+      const storage = createSbClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+      const { data, error } = await storage.storage.from('user-uploads').download(filePath);
+      if (error || !data) throw error || new Error('Failed to download from storage');
+      const arr = await data.arrayBuffer();
+      audioData = Buffer.from(arr);
+    }
     
     // Configure transcription parameters
     const transcriptParams = {

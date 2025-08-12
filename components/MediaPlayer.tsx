@@ -207,7 +207,7 @@ export const MediaPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({
     onError: handleError,
     onCanPlay: handleCanPlay,
     preload: "metadata" as const,
-    crossOrigin: "use-credentials" as const,
+    crossOrigin: "anonymous" as const,
     controls: false, // We'll use custom controls
   };
 
@@ -287,14 +287,14 @@ export const MediaPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({
             disabled={!isLoaded && !error}
           >
             {!isLoaded && !error ? (
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-foreground animate-spin" />
             ) : isPlaying ? (
               <div className="flex items-center justify-center space-x-1">
-                <div className="w-[3px] h-[16px] bg-white rounded-sm drop-shadow-md"></div>
-                <div className="w-[3px] h-[16px] bg-white rounded-sm drop-shadow-md"></div>
+                <div className="w-[3px] h-[16px] bg-primary-foreground rounded-sm drop-shadow-md"></div>
+                <div className="w-[3px] h-[16px] bg-primary-foreground rounded-sm drop-shadow-md"></div>
               </div>
             ) : (
-              <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1 drop-shadow-md"></div>
+              <div className="w-0 h-0 border-l-[12px] border-l-primary-foreground border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1 drop-shadow-md"></div>
             )}
           </Button>
           

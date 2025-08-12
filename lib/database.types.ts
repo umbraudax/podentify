@@ -61,6 +61,7 @@ export type Database = {
       episodes: {
         Row: {
           audio_url: string
+          storage_key: string | null
           created_at: string | null
           description: string | null
           duration: number | null
@@ -74,6 +75,7 @@ export type Database = {
         }
         Insert: {
           audio_url: string
+          storage_key?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -87,6 +89,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string
+          storage_key?: string | null
           created_at?: string | null
           description?: string | null
           duration?: number | null

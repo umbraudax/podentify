@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
   // Add CORS headers to all responses
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, stripe-signature, authorization',
   };

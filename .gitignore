@@ -1,3 +1,16 @@
+# Ignore local uploads directory; storage has moved to Supabase Storage
+uploads/
+
+# Environment files
+.env*
+
+# Next.js build outputs
+.next/
+out/
+
+# Node modules
+node_modules/
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
