@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Get transcript record to verify it exists
     const { data: transcriptData, error: transcriptError } = await supabaseAdmin
       .from('transcripts')
-      .select('id, episode_id')
+      .select('id, episode_id, status')
       .eq('id', transcriptId)
       .single();
 
@@ -40,7 +40,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Transcript not found' }, { status: 404 });
     }
 
-    transcript = transcriptData;
+    transcript = transcriptData as any;
+
+    // Idempotency guard: if already completed/failed, do nothing
+    if ((transcriptData as any).status && (transcriptData as any).status !== 'processing') {
+      return NextResponse.json({ message: `Transcript already ${ (transcriptData as any).status }` });
+    }
 
     // Read the audio file
     let audioData: Buffer;

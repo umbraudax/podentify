@@ -76,37 +76,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
     }
 
-    // Create episode row linked to storage object
-    const { data: episode, error: dbError } = await supabaseAdmin
+    // Upsert/Reuse episode row linked to storage object to avoid duplicates
+    const { data: existingEpisode } = await supabaseAdmin
       .from('episodes')
-      .insert({
-        user_id: user.id,
-        title: title || originalName.replace(/\.[^/.]+$/, ''),
-        description: description || null,
-        audio_url: mediaType === MEDIA_TYPES.VIDEO
-          ? `/api/video/${user.id}/${objectKey.split('/').pop()}`
-          : `/api/audio/${user.id}/${objectKey.split('/').pop()}`,
-        storage_key: objectKey,
-        media_type: mediaType,
-        status: 'uploading',
-      })
-      .select()
+      .select('*')
+      .eq('storage_key', objectKey)
+      .eq('user_id', user.id)
       .single();
+
+    let episode = existingEpisode;
+    let dbError: any = null;
+
+    if (!episode) {
+      const insertRes = await supabaseAdmin
+        .from('episodes')
+        .insert({
+          user_id: user.id,
+          title: title || originalName.replace(/\.[^/.]+$/, ''),
+          description: description || null,
+          audio_url: mediaType === MEDIA_TYPES.VIDEO
+            ? `/api/video/${user.id}/${objectKey.split('/').pop()}`
+            : `/api/audio/${user.id}/${objectKey.split('/').pop()}`,
+          storage_key: objectKey,
+          media_type: mediaType,
+          status: 'uploading',
+        })
+        .select()
+        .single();
+      episode = insertRes.data as any;
+      dbError = insertRes.error;
+    }
 
     if (dbError || !episode) {
       console.error('Failed to insert episode:', dbError);
       return NextResponse.json({ error: 'Failed to create episode record' }, { status: 500 });
     }
 
-    // Create transcript record and set episode to processing
-    const { data: transcript } = await supabaseAdmin
+    // Create transcript record if not exists and set episode to processing
+    const { data: existingTranscript } = await supabaseAdmin
       .from('transcripts')
-      .insert({
-        episode_id: episode.id,
-        status: 'processing',
-      })
-      .select()
+      .select('*')
+      .eq('episode_id', episode.id)
       .single();
+
+    let transcript = existingTranscript;
+    if (!transcript) {
+      const inserted = await supabaseAdmin
+        .from('transcripts')
+        .insert({ episode_id: episode.id, status: 'processing' })
+        .select()
+        .single();
+      transcript = inserted.data as any;
+    }
 
     await supabaseAdmin
       .from('episodes')
