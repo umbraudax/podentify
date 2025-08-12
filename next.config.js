@@ -6,8 +6,7 @@ const nextConfig = {
   images: { unoptimized: true },
   experimental: {
     serverComponentsExternalPackages: ['@stripe/stripe-js'],
-  },
-  output: 'export'
+  }
 };
 
 module.exports = nextConfig;
