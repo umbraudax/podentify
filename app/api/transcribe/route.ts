@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: `Transcript already ${ (transcriptData as any).status }` });
     }
 
+    // Ensure provider API key exists
+    if (!process.env.ASSEMBLYAI_API_KEY) {
+      console.error('Missing ASSEMBLYAI_API_KEY');
+      return NextResponse.json({ error: 'Transcription not configured' }, { status: 500 });
+    }
+
     // Create a signed URL for AssemblyAI to fetch directly from Supabase Storage
     const { data: signed, error: signErr } = await supabaseAdmin.storage
       .from('user-uploads')
@@ -68,7 +74,8 @@ export async function POST(request: NextRequest) {
       webhook_url: webhookUrl,
     } as any);
 
-    return NextResponse.json({ message: 'Transcription queued' }, { status: 202 });
+    console.log('AssemblyAI transcription queued for transcript', transcriptId);
+    return NextResponse.json({ message: 'Transcription queued', queued: true }, { status: 202 });
 
   } catch (error) {
     console.error('Transcription error:', error);

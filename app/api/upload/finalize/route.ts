@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { AssemblyAI } from 'assemblyai';
 import { fileTypeFromBuffer } from 'file-type';
 import { MEDIA_TYPES } from '@/lib/constants';
 import { getUserCredits, hasEnoughCredits } from '@/lib/credit-service';
@@ -134,21 +135,55 @@ export async function POST(request: NextRequest) {
       .update({ status: 'processing' })
       .eq('id', episode.id);
 
-    // Kick off background transcription via internal API
+    // Kick off background transcription: prefer internal API; fall back to direct provider call
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      console.error('Missing NEXT_PUBLIC_APP_URL');
-    } else if (transcript) {
-      fetch(`${appUrl}/api/transcribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcriptId: transcript.id,
-          filePath: objectKey,
-          userId: user.id,
-          shouldCleanup: false,
-        }),
-      }).catch((e) => console.error('Failed to start transcription:', e));
+    let enqueued = false;
+    if (appUrl && transcript) {
+      try {
+        const resp = await fetch(`${appUrl}/api/transcribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transcriptId: transcript.id,
+            filePath: objectKey,
+            userId: user.id,
+            shouldCleanup: false,
+          }),
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        enqueued = true;
+      } catch (e) {
+        console.error('Transcribe POST failed, will queue directly:', e);
+      }
+    } else {
+      if (!appUrl) console.error('Missing NEXT_PUBLIC_APP_URL');
+    }
+
+    if (!enqueued && transcript) {
+      try {
+        // Create a signed URL for provider to fetch
+        const { data: signed, error: signErr } = await supabaseAdmin.storage
+          .from('user-uploads')
+          .createSignedUrl(objectKey, 60 * 60 * 6);
+        if (signErr || !signed?.signedUrl) {
+          throw signErr || new Error('Failed to create signed URL');
+        }
+
+        const client = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
+        const webhookUrl = appUrl ? `${appUrl}/api/transcribe/webhook?tid=${encodeURIComponent(transcript.id)}&uid=${encodeURIComponent(user.id)}` : undefined;
+        await client.transcripts.create({
+          audio_url: signed.signedUrl,
+          speaker_labels: true,
+          auto_highlights: false,
+          punctuate: true,
+          format_text: true,
+          language_detection: true,
+          webhook_url: webhookUrl,
+        } as any);
+        enqueued = true;
+      } catch (e) {
+        console.error('Direct transcription queueing failed:', e);
+      }
     }
 
     return NextResponse.json({ episode });
