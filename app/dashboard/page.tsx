@@ -172,30 +172,68 @@ export default function Dashboard() {
         return;
       }
 
-      // Create FormData
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove extension for title
-      
-      // Upload file to server which uploads to Supabase Storage
-      const response = await fetch('/api/upload', {
+      // 1) Get signed upload URL
+      const initRes = await fetch('/api/upload/signed-url', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to initialize upload');
       }
 
-      const result = await response.json();
+      const { objectKey, signedUrl, token, estimated_credits, mediaType } = await initRes.json();
+
+      // 2) Upload file directly to Supabase Storage using the signed URL
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': file.type || 'application/octet-stream',
+          'x-upsert': 'false',
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text().catch(() => '');
+        throw new Error(`Upload failed: ${uploadRes.status} ${text}`);
+      }
+
+      // 3) Finalize (create DB record and kick off processing)
+      const finalizeRes = await fetch('/api/upload/finalize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          objectKey,
+          originalName: file.name,
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          mediaType,
+          estimatedMinutes: estimated_credits,
+        }),
+      });
+
+      if (!finalizeRes.ok) {
+        const err = await finalizeRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to finalize upload');
+      }
+
+      const result = await finalizeRes.json();
       
       // Refresh episodes list
       fetchRecentEpisodes();
-      refreshCredits(); // Refresh credits after successful upload
+      refreshCredits();
       
       // Redirect to processing page
       router.push(`/dashboard/episode/${result.episode.id}`);
