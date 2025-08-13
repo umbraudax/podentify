@@ -127,7 +127,7 @@ export default function Header() {
               {loading ? (
                 <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
               ) : user ? (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center space-x-2 hover:bg-surface-secondary">
                       <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">

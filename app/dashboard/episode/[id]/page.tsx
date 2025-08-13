@@ -883,7 +883,7 @@ export default function EpisodeProcessingPage() {
               </Button>
 
               {/* Profile Dropdown */}
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="flex items-center space-x-2 border-border hover:border-brand-primary">
                     <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
