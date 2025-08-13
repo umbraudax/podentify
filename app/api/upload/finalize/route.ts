@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         // Create a signed URL for provider to fetch
         const { data: signed, error: signErr } = await supabaseAdmin.storage
           .from('user-uploads')
-          .createSignedUrl(objectKey, 60 * 60 * 6);
+          .createSignedUrl(objectKey, 60 * 60 * 24);
         if (signErr || !signed?.signedUrl) {
           throw signErr || new Error('Failed to create signed URL');
         }

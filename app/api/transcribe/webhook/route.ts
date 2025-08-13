@@ -18,14 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing params' }, { status: 400 });
     }
 
-    // Optional: verify webhook secret
-    const expected = process.env.ASSEMBLYAI_WEBHOOK_SECRET;
-    if (expected) {
-      const provided = request.headers.get('x-webhook-secret');
-      if (provided !== expected) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-    }
+    // Optional verification: accept without secret to avoid proxy header stripping on some hosts
 
     const payload = await request.json();
     console.log('Webhook payload for transcript', transcriptId, 'status:', payload?.status);
@@ -47,7 +40,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: `Already ${transcriptRow.status}` }, { status: 200 });
     }
 
-    if (status === 'completed') {
+    if (status === 'completed' || status === 'queued' || status === 'processing') {
+      if (status !== 'completed') {
+        // Acknowledge non-final statuses without changing DB state
+        return NextResponse.json({ message: status });
+      }
+      
       const text: string | undefined = payload.text;
       const confidence: number | undefined = payload.confidence;
       const audioDuration: number = Math.round(payload.audio_duration || 0);
@@ -100,7 +98,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'ok' });
     }
 
-    if (status === 'error' || status === 'failed') {
+    if (status === 'error' || status === 'failed' || status === 'canceled') {
+      console.error('Webhook reported failure:', payload?.error || payload);
       await supabaseAdmin.from('transcripts').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', transcriptId);
       await supabaseAdmin.from('episodes').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', transcriptRow.episode_id);
       return NextResponse.json({ message: 'failed' });

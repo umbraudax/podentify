@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Create a signed URL for AssemblyAI to fetch directly from Supabase Storage
     const { data: signed, error: signErr } = await supabaseAdmin.storage
       .from('user-uploads')
-      .createSignedUrl(filePath, 60 * 60 * 6); // 6 hours
+      .createSignedUrl(filePath, 60 * 60 * 24); // 24 hours TTL to avoid expiry during queue
     if (signErr || !signed?.signedUrl) {
       console.error('Failed to create signed URL for transcription:', signErr);
       return NextResponse.json({ error: 'Failed to start transcription' }, { status: 500 });
@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     const webhookUrl = appUrl
       ? `${appUrl}/api/transcribe/webhook?tid=${encodeURIComponent(transcriptId)}&uid=${encodeURIComponent(userId)}`
       : undefined;
+    console.log('Signed URL TTL 24h created for', filePath, 'len:', signed.signedUrl.length, 'webhook:', webhookUrl || '(none)');
 
     const createRes = await client.transcripts.create({
       audio_url: signed.signedUrl,
