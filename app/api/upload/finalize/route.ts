@@ -136,7 +136,10 @@ export async function POST(request: NextRequest) {
       .eq('id', episode.id);
 
     // Kick off background transcription: prefer internal API; fall back to direct provider call
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const appUrl = rawAppUrl
+      ? (/^https?:\/\//i.test(rawAppUrl) ? rawAppUrl.replace(/\/$/, '') : `https://${rawAppUrl.replace(/\/$/, '')}`)
+      : '';
     let enqueued = false;
     if (appUrl && transcript) {
       try {
@@ -156,7 +159,7 @@ export async function POST(request: NextRequest) {
         console.error('Transcribe POST failed, will queue directly:', e);
       }
     } else {
-      if (!appUrl) console.error('Missing NEXT_PUBLIC_APP_URL');
+      if (!appUrl) console.error('Missing NEXT_PUBLIC_APP_URL or invalid format (needs https://...)');
     }
 
     if (!enqueued && transcript) {

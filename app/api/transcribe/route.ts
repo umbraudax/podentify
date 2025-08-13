@@ -61,8 +61,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Queue transcription with webhook callback
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
-    const webhookUrl = `${appUrl}/api/transcribe/webhook?tid=${encodeURIComponent(transcriptId)}&uid=${encodeURIComponent(userId)}`;
+    const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const appUrl = rawAppUrl
+      ? (/^https?:\/\//i.test(rawAppUrl) ? rawAppUrl.replace(/\/$/, '') : `https://${rawAppUrl.replace(/\/$/, '')}`)
+      : '';
+    const webhookUrl = appUrl
+      ? `${appUrl}/api/transcribe/webhook?tid=${encodeURIComponent(transcriptId)}&uid=${encodeURIComponent(userId)}`
+      : undefined;
 
     await client.transcripts.create({
       audio_url: signed.signedUrl,
