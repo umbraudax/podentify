@@ -152,8 +152,16 @@
 }
 
 @layer base {
+  /* Reserve scrollbar space across platforms */
   html {
-    scrollbar-gutter: stable;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  /* Fallback for browsers without scrollbar-gutter support */
+  @supports not (scrollbar-gutter: stable) {
+    html {
+      overflow-y: scroll;
+    }
   }
 
   * {
