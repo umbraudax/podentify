@@ -33,7 +33,6 @@ export default function ShowNotesFeature() {
                 <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-brand-primary font-semibold text-lg">Feature 1</span>
               </div>
               
               <h2 className="text-4xl lg:text-5xl font-bold text-text-primary">

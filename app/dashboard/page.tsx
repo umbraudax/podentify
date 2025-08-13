@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [episodesLoading, setEpisodesLoading] = useState(true);
   const [deleteEpisodeId, setDeleteEpisodeId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -172,6 +173,8 @@ export default function Dashboard() {
         return;
       }
 
+      setIsUploading(true);
+
       // 1) Get signed upload URL
       const initRes = await fetch('/api/upload/signed-url', {
         method: 'POST',
@@ -241,6 +244,8 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -428,6 +433,7 @@ export default function Dashboard() {
                     type="file"
                     accept="audio/*,video/*"
                     onChange={handleChange}
+                    disabled={isUploading}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   
@@ -448,9 +454,18 @@ export default function Dashboard() {
                       </p>
                     </div>
                     
-                    <Button className="bg-brand-primary hover:bg-brand-primary/90">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Choose File
+                    <Button className="bg-brand-primary hover:bg-brand-primary/90" disabled={isUploading}>
+                      {isUploading ? (
+                        <>
+                          <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground/60 border-t-transparent"></div>
+                          Uploading File
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Choose File
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

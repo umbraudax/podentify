@@ -7,26 +7,20 @@ export default function Footer() {
   const navigation = {
     product: [
       { name: 'Features', href: '#features' },
-      { name: 'Pricing', href: '#pricing' },
-      { name: 'API', href: '#api' }
+      { name: 'Pricing', href: '#pricing' }
     ],
     company: [
-      { name: 'About', href: '#about' },
-      { name: 'Blog', href: '#blog' },
-      { name: 'Press', href: '#press' },
-      { name: 'Careers', href: '#careers' }
+      { name: 'About', href: '/about' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Sitemap', href: '/sitemap' }
     ],
     support: [
-      { name: 'Help Center', href: '#help' },
-      { name: 'Contact', href: '#contact' },
-      { name: 'Status', href: '#status' },
-      { name: 'Updates', href: '#updates' }
+      { name: 'FAQ', href: '/faq' },
+      { name: 'Contact', href: '/contact' }
     ],
     legal: [
-      { name: 'Privacy Policy', href: '#privacy' },
-      { name: 'Terms of Service', href: '#terms' },
-      { name: 'Cookie Policy', href: '#cookies' },
-      { name: 'GDPR', href: '#gdpr' }
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' }
     ]
   };
 
@@ -37,7 +31,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-surface-inverse text-text-inverse">
+    <footer className="bg-surface-secondary dark:bg-surface-primary text-text-primary">
       <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
         {/* Main Footer Content */}
         <div className="grid lg:grid-cols-6 gap-12 mb-12">
@@ -45,10 +39,10 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center space-x-3">
               <Image src="/podentify-logo.png" alt="Podentify logo" width={40} height={40} className="w-10 h-10" />
-              <span className="text-2xl font-bold text-text-inverse">Podentify</span>
+              <span className="text-2xl font-bold text-text-primary">Podentify</span>
             </div>
             
-            <p className="text-text-inverse/70 leading-relaxed max-w-md">
+            <p className="text-text-secondary leading-relaxed max-w-md">
               Transform your podcast workflow with AI-powered show notes and social media clips. Save hours, boost reach, engage new audiences.
             </p>
 
@@ -59,7 +53,7 @@ export default function Footer() {
                   href={item.href}
                   className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/15 transition-colors group"
                 >
-                  <item.icon className="w-5 h-5 text-white/70 group-hover:text-white" />
+                  <item.icon className="w-5 h-5 text-text-secondary group-hover:text-text-primary" />
                 </a>
               ))}
             </div>
@@ -67,13 +61,13 @@ export default function Footer() {
 
           {/* Navigation Columns */}
           <div>
-            <h3 className="text-text-inverse font-semibold mb-4">Product</h3>
+            <h3 className="text-text-primary font-semibold mb-4">Product</h3>
             <ul className="space-y-3">
               {navigation.product.map((item) => (
                 <li key={item.name}>
                   <a
                     href={item.href}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-brand-primary transition-colors"
                   >
                     {item.name}
                   </a>
@@ -83,13 +77,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-text-inverse font-semibold mb-4">Company</h3>
+            <h3 className="text-text-primary font-semibold mb-4">Company</h3>
             <ul className="space-y-3">
               {navigation.company.map((item) => (
                 <li key={item.name}>
                   <a
                     href={item.href}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-brand-primary transition-colors"
                   >
                     {item.name}
                   </a>
@@ -99,13 +93,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-text-inverse font-semibold mb-4">Support</h3>
+            <h3 className="text-text-primary font-semibold mb-4">Support</h3>
             <ul className="space-y-3">
               {navigation.support.map((item) => (
                 <li key={item.name}>
                   <a
                     href={item.href}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-brand-primary transition-colors"
                   >
                     {item.name}
                   </a>
@@ -115,13 +109,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-text-inverse font-semibold mb-4">Legal</h3>
+            <h3 className="text-text-primary font-semibold mb-4">Legal</h3>
             <ul className="space-y-3">
               {navigation.legal.map((item) => (
                 <li key={item.name}>
                   <a
                     href={item.href}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-brand-primary transition-colors"
                   >
                     {item.name}
                   </a>
@@ -134,16 +128,11 @@ export default function Footer() {
 
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-white/70 text-sm">
+        <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <p className="text-text-secondary text-sm">
             © 2025 Podentify. All rights reserved.
           </p>
           
-          <div className="flex items-center space-x-6 text-sm text-white/70">
-            <span>Made with ❤️ for podcasters</span>
-            <div className="w-px h-4 bg-white/20"></div>
-            <span>🚀 Powered by AI</span>
-          </div>
         </div>
       </div>
     </footer>

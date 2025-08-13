@@ -145,7 +145,6 @@ export default function SocialSnippetsFeature() {
                 <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
                   <Share2 className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-purple-600 font-semibold text-lg">Feature 2</span>
               </div>
               
               <h2 className="text-4xl lg:text-5xl font-bold text-text-primary">

@@ -58,33 +58,10 @@ export default function HeroSection() {
               >
                 {user ? 'Go to Dashboard' : 'Get Started for Free'}
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-2 border-border hover:border-brand-primary text-text-primary hover:text-brand-primary px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Watch Demo
-              </Button>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="flex items-center space-x-6 pt-8">
-              <p className="text-sm text-text-tertiary">Trusted by content creators</p>
-              <div className="flex items-center space-x-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full border-2 border-surface-primary flex items-center justify-center text-white text-xs font-semibold"
-                    >
-                      {i}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">2,000+ creators</p>
-              </div>
-            </div>
+            {/* Trust Indicator */}
+            <p className="pt-8 text-sm text-text-tertiary">Trusted by over 1000+ content creators.</p>
           </div>
 
           {/* Right Column - Visual */}
