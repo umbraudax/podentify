@@ -189,6 +189,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (!enqueued && transcript) {
+      // Mark failed so UI does not spin forever
+      await supabaseAdmin.from('transcripts').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', transcript.id);
+      await supabaseAdmin.from('episodes').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', episode.id);
+      return NextResponse.json({ error: 'Failed to queue transcription' }, { status: 500 });
+    }
+
     return NextResponse.json({ episode });
   } catch (err) {
     console.error('Finalize upload error:', err);

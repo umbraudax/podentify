@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       ? `${appUrl}/api/transcribe/webhook?tid=${encodeURIComponent(transcriptId)}&uid=${encodeURIComponent(userId)}`
       : undefined;
 
-    await client.transcripts.create({
+    const createRes = await client.transcripts.create({
       audio_url: signed.signedUrl,
       speaker_labels: true,
       auto_highlights: false,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       webhook_url: webhookUrl,
     } as any);
 
-    console.log('AssemblyAI transcription queued for transcript', transcriptId);
+    console.log('AssemblyAI transcription queued for transcript', transcriptId, 'providerId:', (createRes as any)?.id);
     return NextResponse.json({ message: 'Transcription queued', queued: true }, { status: 202 });
 
   } catch (error) {

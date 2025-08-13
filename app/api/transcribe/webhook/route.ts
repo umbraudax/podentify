@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = await request.json();
+    console.log('Webhook payload for transcript', transcriptId, 'status:', payload?.status);
     const status = payload.status as string;
 
     // Fetch transcript row for episode mapping
