@@ -120,10 +120,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Supabase Storage private bucket
+    // Normalize content type for known audio-in-mp4-container cases (e.g., .m4a)
+    const normalizedContentType = (() => {
+      const lowerExt = extension.toLowerCase();
+      if ((lowerExt === '.m4a') && detected.mime === 'video/mp4') {
+        return 'audio/mp4';
+      }
+      return detected.mime;
+    })();
+
     const { error: uploadError } = await supabaseAdmin.storage
       .from('user-uploads')
       .upload(objectKey, fullBuffer, {
-        contentType: detected.mime,
+        contentType: normalizedContentType,
         upsert: false,
       });
 

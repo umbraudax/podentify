@@ -61,8 +61,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unable to detect file type' }, { status: 400 });
     }
 
-    if (mediaType === MEDIA_TYPES.AUDIO && !detected.mime.startsWith('audio/')) {
-      return NextResponse.json({ error: `Expected audio but detected ${detected.mime}` }, { status: 400 });
+    if (mediaType === MEDIA_TYPES.AUDIO) {
+      const lowerOriginal = originalName.toLowerCase();
+      const isM4AByName = lowerOriginal.endsWith('.m4a') || objectKey.toLowerCase().endsWith('.m4a');
+      const isMp4Container = detected.mime === 'video/mp4' || detected.mime === 'audio/mp4';
+
+      const looksAudio = detected.mime.startsWith('audio/') || (isM4AByName && isMp4Container);
+      if (!looksAudio) {
+        return NextResponse.json({ error: `Expected audio but detected ${detected.mime}` }, { status: 400 });
+      }
     }
     if (mediaType === MEDIA_TYPES.VIDEO && !detected.mime.startsWith('video/')) {
       return NextResponse.json({ error: `Expected video but detected ${detected.mime}` }, { status: 400 });
