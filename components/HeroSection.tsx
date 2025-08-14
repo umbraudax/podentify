@@ -18,8 +18,9 @@ export default function HeroSection() {
 
   const handleGetStarted = () => {
     if (user) {
-      // Redirect to dashboard
-      router.push('/dashboard');
+      const ua = typeof window !== 'undefined' ? navigator.userAgent || '' : '';
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(ua);
+      router.push(isMobile ? '/mobile-only' : '/dashboard');
     } else {
       router.push('/auth/signup');
     }

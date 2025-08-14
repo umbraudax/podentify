@@ -68,6 +68,16 @@ export default function Header() {
   // Plan badge classes centralized
   const getPlanBadgeColors = getPlanBadgeClasses;
 
+  const goToDashboardRespectingDevice = () => {
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent || '';
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(ua);
+      router.push(isMobile ? '/mobile-only' : '/dashboard');
+      return;
+    }
+    router.push('/dashboard');
+  };
+
   return (
     <div>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -134,7 +144,7 @@ export default function Header() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <DropdownMenuItem onClick={goToDashboardRespectingDevice}>
                       <Mic className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
@@ -214,7 +224,7 @@ export default function Header() {
                       variant="ghost" 
                       className="w-full justify-start text-text-primary hover:text-brand-primary font-medium"
                       onClick={() => {
-                        router.push('/dashboard');
+                        goToDashboardRespectingDevice();
                         setIsMobileMenuOpen(false);
                       }}
                     >
