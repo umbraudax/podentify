@@ -155,6 +155,8 @@
   /* Reserve scrollbar space across platforms */
   html, body {
     scrollbar-gutter: stable both-edges;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   /* Fallback for browsers without scrollbar-gutter support */
