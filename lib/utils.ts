@@ -132,3 +132,18 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(() => func(...args), wait);
   };
 }
+
+/**
+ * Returns Tailwind classes for subscription plan badges so colors are consistent site-wide
+ * Basic: grey, Pro: blue, Ultra: purple
+ */
+export function getPlanBadgeClasses(plan: string): string {
+  switch (plan) {
+    case 'Ultra':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
+    case 'Pro':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+  }
+}

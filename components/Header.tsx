@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { getUserDisplayName } from '@/lib/utils';
+import { getUserDisplayName, getPlanBadgeClasses } from '@/lib/utils';
 
 import {
   DropdownMenu,
@@ -64,17 +64,8 @@ export default function Header() {
   const userDisplayName = getUserDisplayName(user);
   const planName = getSubscriptionPlan();
 
-  // Helper function for plan-specific badge colors (matching pricing section colors)
-  const getPlanBadgeColors = (plan: string) => {
-    switch (plan) {
-      case 'Ultra':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
-      case 'Pro':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
-      default: // Basic/Free
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
-    }
-  };
+  // Plan badge classes centralized
+  const getPlanBadgeColors = getPlanBadgeClasses;
 
   return (
     <div>
@@ -133,18 +124,15 @@ export default function Header() {
                       <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-text-primary font-medium">{userDisplayName}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="px-2 py-2 border-b border-border">
-                      <p className="text-sm font-medium text-text-primary">{userDisplayName}</p>
-                      <div className="flex items-center mt-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-text-primary font-medium">{userDisplayName}</span>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeColors(planName)}`}>
                           {planName}
                         </span>
                       </div>
-                    </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                       <Mic className="mr-2 h-4 w-4" />
                       Dashboard

@@ -79,12 +79,12 @@ export default function ProblemSolutionSection() {
         <div className="grid md:grid-cols-3 gap-8">
           {solutions.map((solution, index) => (
             <div key={index} className="group" data-reveal data-reveal-delay={`${index * 100}`}>
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-100 group-hover:border-blue-200 transition-all duration-300 h-full group-hover:shadow-xl">
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 border border-blue-100 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-gray-600 transition-all duration-300 h-full group-hover:shadow-xl">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <solution.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{solution.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{solution.description}</p>
+                <h3 className="text-xl font-bold text-text-primary mb-4">{solution.title}</h3>
+                <p className="text-text-secondary leading-relaxed">{solution.description}</p>
               </div>
             </div>
           ))}
