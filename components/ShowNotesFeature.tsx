@@ -23,23 +23,23 @@ export default function ShowNotesFeature() {
   ];
 
   return (
-    <section className="py-24 bg-surface-primary">
+    <section className="py-16 sm:py-24 bg-surface-primary">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-16 items-center">
           {/* Left Column - Content */}
           <div className="space-y-8" data-reveal>
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand-primary rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
               
-              <h2 className="text-4xl lg:text-5xl font-bold text-text-primary">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary">
                 Intelligent Show Notes, Instantly.
               </h2>
               
-              <p className="text-xl text-text-secondary leading-relaxed">
+              <p className="text-base sm:text-xl text-text-secondary leading-relaxed">
                 Podentify listens to your entire episode and intelligently crafts comprehensive show notes. We go beyond simple transcription, providing you with a structured, easy-to-read summary, key discussion points, and precise timestamps.
               </p>
             </div>
@@ -47,11 +47,11 @@ export default function ShowNotesFeature() {
             <div className="space-y-6">
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex space-x-4" data-reveal data-reveal-delay={`${index * 100}`}>
-                  <div className="w-12 h-12 bg-brand-tertiary rounded-lg flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="w-6 h-6 text-brand-primary" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand-tertiary rounded-lg flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-text-primary text-lg">{benefit.title}</h3>
+                    <h3 className="font-bold text-text-primary text-base sm:text-lg">{benefit.title}</h3>
                     <p className="text-text-secondary">{benefit.description}</p>
                   </div>
                 </div>
@@ -60,7 +60,7 @@ export default function ShowNotesFeature() {
 
             <Button 
               size="lg" 
-              className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 py-4 text-lg font-semibold rounded-xl"
+              className="bg-brand-primary hover:bg-brand-primary/90 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl"
             >
               Try Show Notes Generator
             </Button>
@@ -70,48 +70,48 @@ export default function ShowNotesFeature() {
           <div className="relative" data-reveal data-reveal-delay="150">
             <div className="bg-surface-primary rounded-2xl shadow-2xl border border-border overflow-hidden">
               {/* Header */}
-              <div className="bg-surface-secondary px-6 py-4 border-b border-border">
+              <div className="bg-surface-secondary px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-error rounded-full"></div>
                   <div className="w-3 h-3 bg-warning rounded-full"></div>
                   <div className="w-3 h-3 bg-success rounded-full"></div>
-                  <span className="text-sm text-text-secondary ml-4">Show Notes Editor</span>
+                  <span className="text-xs sm:text-sm text-text-secondary ml-4">Show Notes Editor</span>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-text-primary">Episode 42: The Future of AI</h3>
-                    <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium">SEO Optimized</span>
+                    <h3 className="text-base sm:text-lg font-bold text-text-primary">Episode 42: The Future of AI</h3>
+                    <span className="text-[10px] sm:text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium">SEO Optimized</span>
                   </div>
-                  <p className="text-sm text-text-secondary">Generated in 2 minutes • 45:30 duration</p>
+                  <p className="text-xs sm:text-sm text-text-secondary">Generated in 2 minutes • 45:30 duration</p>
                 </div>
 
                 <div className="space-y-4">
                   <div className="bg-brand-tertiary rounded-lg p-4">
                     <h4 className="font-semibold text-text-primary mb-2">📝 Summary</h4>
-                    <p className="text-sm text-text-secondary">In this episode, we explore the transformative potential of artificial intelligence across various industries, discussing both opportunities and challenges...</p>
+                    <p className="text-xs sm:text-sm text-text-secondary">In this episode, we explore the transformative potential of artificial intelligence across various industries, discussing both opportunities and challenges...</p>
                   </div>
 
                   <div className="space-y-3">
                     <h4 className="font-semibold text-text-primary">🎯 Key Topics</h4>
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-3 p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
+                      <div className="flex items-center space-x-3 p-2 sm:p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <div className="w-2 h-2 bg-brand-primary rounded-full"></div>
-                        <span className="text-sm text-text-secondary flex-1">AI in Healthcare Revolution</span>
-                        <span className="text-xs text-brand-primary font-medium">03:45</span>
+                        <span className="text-xs sm:text-sm text-text-secondary flex-1">AI in Healthcare Revolution</span>
+                        <span className="text-[10px] sm:text-xs text-brand-primary font-medium">03:45</span>
                       </div>
-                      <div className="flex items-center space-x-3 p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
+                      <div className="flex items-center space-x-3 p-2 sm:p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <div className="w-2 h-2 bg-brand-secondary rounded-full"></div>
-                        <span className="text-sm text-text-secondary flex-1">Ethical Considerations</span>
-                        <span className="text-xs text-brand-secondary font-medium">12:20</span>
+                        <span className="text-xs sm:text-sm text-text-secondary flex-1">Ethical Considerations</span>
+                        <span className="text-[10px] sm:text-xs text-brand-secondary font-medium">12:20</span>
                       </div>
-                      <div className="flex items-center space-x-3 p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
+                      <div className="flex items-center space-x-3 p-2 sm:p-3 bg-surface-secondary rounded-lg cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <div className="w-2 h-2 bg-success rounded-full"></div>
-                        <span className="text-sm text-text-secondary flex-1">Future Predictions</span>
-                        <span className="text-xs text-success font-medium">28:15</span>
+                        <span className="text-xs sm:text-sm text-text-secondary flex-1">Future Predictions</span>
+                        <span className="text-[10px] sm:text-xs text-success font-medium">28:15</span>
                       </div>
                     </div>
                   </div>
@@ -120,7 +120,7 @@ export default function ShowNotesFeature() {
             </div>
 
             {/* Floating Badge */}
-            <div className="absolute -top-4 -right-4 bg-success text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-lg">
+            <div className="absolute -top-4 -right-4 bg-success text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-semibold text-xs sm:text-sm shadow-lg">
               Ready to Publish!
             </div>
           </div>

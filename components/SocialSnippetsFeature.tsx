@@ -55,27 +55,27 @@ export default function SocialSnippetsFeature() {
   ];
 
   return (
-    <section className="py-24 bg-surface-secondary">
+    <section className="py-16 sm:py-24 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-16 items-center">
           {/* Left Column - Visual Demo */}
           <div className="relative order-2 lg:order-1" data-reveal>
             <div className="bg-surface-secondary rounded-2xl shadow-2xl border border-border overflow-hidden">
               {/* Header */}
-              <div className="bg-surface-primary px-6 py-4 border-b border-border">
+              <div className="bg-surface-primary px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-text-primary">Social Media Clips</h3>
-                  <span className="text-sm text-text-secondary">5 clips found</span>
+                  <h3 className="text-base sm:text-lg font-bold text-text-primary">Social Media Clips</h3>
+                  <span className="text-xs sm:text-sm text-text-secondary">5 clips found</span>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 {clips.map((clip, index) => (
                   <div key={index} className="bg-surface-primary rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-text-primary">{clip.title}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      <h4 className="font-semibold text-text-primary text-sm sm:text-base">{clip.title}</h4>
+                      <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium ${
                         clip.color === 'blue' ? 'bg-brand-tertiary text-brand-primary' :
                         clip.color === 'purple' ? 'bg-brand-secondary/10 text-brand-secondary' :
                         'bg-success/10 text-success'
@@ -86,7 +86,7 @@ export default function SocialSnippetsFeature() {
                     
                     {/* Waveform Visualization */}
                     <div className="mb-4">
-                      <div className="flex items-center space-x-1 h-12 bg-surface-secondary rounded-lg p-2">
+                      <div className="flex items-center space-x-1 h-10 sm:h-12 bg-surface-secondary rounded-lg p-2">
                         {Array.from({ length: 40 }).map((_, i) => (
                           <div 
                             key={i} 
@@ -107,7 +107,7 @@ export default function SocialSnippetsFeature() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-gray-600">
                         <span className="font-medium">{clip.duration}</span> • {clip.timestamp}
                       </div>
                       <div className="flex space-x-2">
@@ -142,16 +142,16 @@ export default function SocialSnippetsFeature() {
           <div className="space-y-8 order-1 lg:order-2" data-reveal data-reveal-delay="100">
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
-                  <Share2 className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+                  <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
               
-              <h2 className="text-4xl lg:text-5xl font-bold text-text-primary">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary">
                 Your Podcast&apos;s Best Moments, Ready to Share.
               </h2>
               
-              <p className="text-xl text-text-secondary leading-relaxed">
+              <p className="text-base sm:text-xl text-text-secondary leading-relaxed">
                 Never miss a viral moment. Podentify&apos;s AI identifies the most engaging, impactful segments of your audio, allowing you to easily preview and download perfectly timed clips for Twitter, Instagram Reels, TikTok, and more.
               </p>
             </div>
@@ -159,11 +159,11 @@ export default function SocialSnippetsFeature() {
             <div className="space-y-6">
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex space-x-4" data-reveal data-reveal-delay={`${index * 100}`}>
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="w-6 h-6 text-purple-600" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-text-primary text-lg">{benefit.title}</h3>
+                    <h3 className="font-bold text-text-primary text-base sm:text-lg">{benefit.title}</h3>
                     <p className="text-text-secondary">{benefit.description}</p>
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export default function SocialSnippetsFeature() {
 
             <Button 
               size="lg" 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl"
             >
               Try Clip Generator
             </Button>

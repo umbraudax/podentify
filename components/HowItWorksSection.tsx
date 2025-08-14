@@ -28,13 +28,13 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 bg-surface-primary">
+    <section id="how-it-works" className="py-16 sm:py-24 bg-surface-primary">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-20" data-reveal>
-          <h2 className="text-4xl lg:text-5xl font-bold text-text-primary mb-6">
+        <div className="text-center mb-16 sm:mb-20" data-reveal>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-4 sm:mb-6">
             It&apos;s As Easy As 1, 2, 3.
           </h2>
-          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-text-secondary max-w-3xl mx-auto">
             Transform your podcast workflow in minutes, not hours. Our streamlined process makes content amplification effortless.
           </p>
         </div>
@@ -43,12 +43,12 @@ export default function HowItWorksSection() {
           {/* Connection Lines */}
           <div className="hidden lg:block absolute top-10 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-primary/20 via-brand-secondary/20 to-success/20"></div>
           
-          <div className="grid lg:grid-cols-3 gap-12 relative">
+          <div className="grid lg:grid-cols-3 gap-8 sm:gap-12 relative">
             {steps.map((step, index) => (
               <div key={index} className="text-center group" data-reveal data-reveal-delay={`${index * 120}`}>
                 <div className="relative mb-8">
                   {/* Step Number */}
-                  <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold mb-6 transition-all duration-300 group-hover:scale-110 ${
+                  <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full text-xl sm:text-2xl font-bold mb-4 sm:mb-6 transition-all duration-300 group-hover:scale-110 ${
                     step.color === 'blue' ? 'bg-brand-primary text-white' :
                     step.color === 'purple' ? 'bg-brand-secondary text-white' :
                     'bg-success text-white'
@@ -57,22 +57,22 @@ export default function HowItWorksSection() {
                   </div>
                   
                   {/* Icon */}
-                  <div className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
+                  <div className={`absolute -bottom-2 -right-2 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg ${
                     step.color === 'blue' ? 'bg-brand-tertiary text-brand-primary' :
                     step.color === 'purple' ? 'bg-brand-secondary/10 text-brand-secondary' :
                     'bg-success/10 text-success'
                   }`}>
-                    <step.icon className="w-5 h-5" />
+                    <step.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary">{step.title}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold text-text-primary">{step.title}</h3>
                   <p className="text-text-secondary leading-relaxed max-w-sm mx-auto">{step.description}</p>
                 </div>
 
                 {/* Visual Enhancement */}
-                <div className={`mt-8 p-6 rounded-2xl transition-all duration-300 group-hover:shadow-lg ${
+                <div className={`mt-6 sm:mt-8 p-4 sm:p-6 rounded-2xl transition-all duration-300 group-hover:shadow-lg ${
                   step.color === 'blue' ? 'bg-brand-tertiary border border-brand-primary/20' :
                   step.color === 'purple' ? 'bg-brand-secondary/5 border border-brand-secondary/20' :
                   'bg-success/5 border border-success/20'

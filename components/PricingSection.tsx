@@ -90,13 +90,13 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-20 bg-surface-secondary">
+    <section id="pricing" className="py-16 sm:py-20 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16" data-reveal>
-          <h2 className="text-4xl font-bold text-text-primary mb-4">
+        <div className="text-center mb-12 sm:mb-16" data-reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3 sm:mb-4">
             Simple, Credit-Based Pricing
           </h2>
-          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-text-secondary max-w-3xl mx-auto">
             Pay only for what you use. 1 credit = 1 minute of transcription. 60 credits = $1.
           </p>
         </div>
@@ -107,15 +107,15 @@ export default function PricingSection() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
           {/* Free Plan */}
           <Card className="border-2 border-border hover:border-muted transition-colors relative" data-reveal data-reveal-delay="0">
-            <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Mic className="w-6 h-6 text-foreground" />
+            <CardHeader className="text-center pb-6 sm:pb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
               </div>
-              <CardTitle className="text-2xl font-bold text-text-primary">Basic</CardTitle>
-              <div className="text-4xl font-bold text-text-primary mt-4">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-text-primary">Basic</CardTitle>
+              <div className="text-3xl sm:text-4xl font-bold text-text-primary mt-3 sm:mt-4">
                 Free
               </div>
               <p className="text-text-secondary">Perfect for getting started</p>
@@ -148,18 +148,18 @@ export default function PricingSection() {
           {/* Pro Plan */}
           <Card className="border-2 border-brand-primary relative shadow-xl bg-surface-primary" data-reveal data-reveal-delay="100">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-brand-primary text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="bg-brand-primary text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold">
                 Most Popular
               </span>
             </div>
-            <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-6 h-6 text-white" />
+            <CardHeader className="text-center pb-6 sm:pb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand-primary rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold text-text-primary">Pro</CardTitle>
-              <div className="text-4xl font-bold text-text-primary mt-4">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-text-primary">Pro</CardTitle>
+              <div className="text-3xl sm:text-4xl font-bold text-text-primary mt-3 sm:mt-4">
                 $14.99
-                <span className="text-lg font-normal text-text-secondary">/month</span>
+                <span className="text-base sm:text-lg font-normal text-text-secondary">/month</span>
               </div>
               <p className="text-text-secondary">For regular podcasters</p>
             </CardHeader>
@@ -194,14 +194,14 @@ export default function PricingSection() {
 
           {/* Ultra Plan (Coming Soon) */}
           <Card className="border-2 border-purple-500/60 transition-colors relative bg-surface-primary" data-reveal data-reveal-delay="200">
-            <CardHeader className="text-center pb-8">
-              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Crown className="w-6 h-6 text-white" />
+            <CardHeader className="text-center pb-6 sm:pb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold text-text-primary">Ultra</CardTitle>
-              <div className="text-4xl font-bold text-text-primary mt-4 opacity-60">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-text-primary">Ultra</CardTitle>
+              <div className="text-3xl sm:text-4xl font-bold text-text-primary mt-3 sm:mt-4 opacity-60">
                 $29.99
-                <span className="text-lg font-normal text-text-secondary">/month</span>
+                <span className="text-base sm:text-lg font-normal text-text-secondary">/month</span>
               </div>
               <p className="text-text-secondary">Premium plan launching soon</p>
             </CardHeader>
