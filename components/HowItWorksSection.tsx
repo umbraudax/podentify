@@ -30,7 +30,7 @@ export default function HowItWorksSection() {
   return (
     <section id="how-it-works" className="py-24 bg-surface-primary">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-20">
+        <div className="text-center mb-20" data-reveal>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-primary mb-6">
             It&apos;s As Easy As 1, 2, 3.
           </h2>
@@ -45,7 +45,7 @@ export default function HowItWorksSection() {
           
           <div className="grid lg:grid-cols-3 gap-12 relative">
             {steps.map((step, index) => (
-              <div key={index} className="text-center group">
+              <div key={index} className="text-center group" data-reveal data-reveal-delay={`${index * 120}`}>
                 <div className="relative mb-8">
                   {/* Step Number */}
                   <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold mb-6 transition-all duration-300 group-hover:scale-110 ${

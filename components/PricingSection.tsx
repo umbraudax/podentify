@@ -92,7 +92,7 @@ export default function PricingSection() {
   return (
     <section id="pricing" className="py-20 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16" data-reveal>
           <h2 className="text-4xl font-bold text-text-primary mb-4">
             Simple, Credit-Based Pricing
           </h2>
@@ -109,7 +109,7 @@ export default function PricingSection() {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Free Plan */}
-          <Card className="border-2 border-border hover:border-muted transition-colors relative">
+          <Card className="border-2 border-border hover:border-muted transition-colors relative" data-reveal data-reveal-delay="0">
             <CardHeader className="text-center pb-8">
               <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Mic className="w-6 h-6 text-foreground" />
@@ -146,7 +146,7 @@ export default function PricingSection() {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="border-2 border-brand-primary relative shadow-xl bg-surface-primary">
+          <Card className="border-2 border-brand-primary relative shadow-xl bg-surface-primary" data-reveal data-reveal-delay="100">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
               <span className="bg-brand-primary text-white px-4 py-2 rounded-full text-sm font-semibold">
                 Most Popular
@@ -193,7 +193,7 @@ export default function PricingSection() {
           </Card>
 
           {/* Ultra Plan (Coming Soon) */}
-          <Card className="border-2 border-purple-500/60 transition-colors relative bg-surface-primary">
+          <Card className="border-2 border-purple-500/60 transition-colors relative bg-surface-primary" data-reveal data-reveal-delay="200">
             <CardHeader className="text-center pb-8">
               <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Crown className="w-6 h-6 text-white" />
@@ -226,19 +226,19 @@ export default function PricingSection() {
         </div>
 
         {/* Credit Explanation */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center" data-reveal data-reveal-delay="100">
           <div className="bg-surface-primary rounded-lg p-8 max-w-4xl mx-auto border border-border">
             <h3 className="text-2xl font-bold text-text-primary mb-4">How Credits Work</h3>
             <div className="grid md:grid-cols-3 gap-6 text-left">
-              <div className="text-center">
+              <div className="text-center" data-reveal data-reveal-delay="0">
                 <div className="text-3xl font-bold text-brand-primary mb-2">1:1</div>
                 <p className="text-text-secondary">1 credit = 1 minute of audio transcription</p>
               </div>
-              <div className="text-center">
+              <div className="text-center" data-reveal data-reveal-delay="100">
                 <div className="text-3xl font-bold text-brand-primary mb-2">$1</div>
                 <p className="text-text-secondary">60 credits cost $1 (when purchasing additional credits)</p>
               </div>
-              <div className="text-center">
+              <div className="text-center" data-reveal data-reveal-delay="200">
                 <div className="text-3xl font-bold text-brand-primary mb-2">Monthly</div>
                 <p className="text-text-secondary">Credits roll over and stack with your monthly allocation</p>
               </div>
