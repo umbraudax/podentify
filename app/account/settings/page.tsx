@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { formatDate, getUserDisplayName } from '@/lib/utils';
+import { formatDate, getUserDisplayName, getPlanBadgeClasses } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 export default function AccountSettings() {
@@ -175,17 +175,8 @@ export default function AccountSettings() {
 
   const planName = getSubscriptionPlan();
 
-  // Helper function for plan-specific colors  
-  const getPlanBadgeColors = (plan: string) => {
-    switch (plan) {
-      case 'Ultra':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
-      case 'Pro':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
-      default: // Basic/Free
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
-    }
-  };
+  // Plan badge classes centralized
+  const getPlanBadgeColors = getPlanBadgeClasses;
 
   const getSubscriptionStatusText = () => {
     if (!subscription) return 'No active subscription';

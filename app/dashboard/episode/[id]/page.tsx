@@ -38,7 +38,7 @@ import { Episode, Transcript, TranscriptWord, Chapter, SocialClip } from '@/lib/
 import ChaptersSection from '@/components/dashboard/ChaptersSection';
 import SocialClipsSection from '@/components/dashboard/SocialClipsSection';
 import { MediaPlayer, MediaPlayerRef } from '@/components/MediaPlayer';
-import { getUserDisplayName } from '@/lib/utils';
+import { getUserDisplayName, getPlanBadgeClasses } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -892,7 +892,7 @@ export default function EpisodeProcessingPage() {
                     <div className="flex items-center space-x-2">
                       <span className="text-text-primary font-medium">{userDisplayName}</span>
                       {subscriptionPlan && (
-                        <Badge variant="secondary" className="text-xs bg-brand-tertiary text-brand-primary">
+                        <Badge variant="secondary" className={`text-xs ${getPlanBadgeClasses(subscriptionPlan)}`}>
                           {subscriptionPlan}
                         </Badge>
                       )}

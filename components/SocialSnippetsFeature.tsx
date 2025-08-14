@@ -59,7 +59,7 @@ export default function SocialSnippetsFeature() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Visual Demo */}
-          <div className="relative order-2 lg:order-1">
+          <div className="relative order-2 lg:order-1" data-reveal>
             <div className="bg-surface-secondary rounded-2xl shadow-2xl border border-border overflow-hidden">
               {/* Header */}
               <div className="bg-surface-primary px-6 py-4 border-b border-border">
@@ -139,7 +139,7 @@ export default function SocialSnippetsFeature() {
           </div>
 
           {/* Right Column - Content */}
-          <div className="space-y-8 order-1 lg:order-2">
+          <div className="space-y-8 order-1 lg:order-2" data-reveal data-reveal-delay="100">
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
@@ -158,7 +158,7 @@ export default function SocialSnippetsFeature() {
 
             <div className="space-y-6">
               {benefits.map((benefit, index) => (
-                <div key={index} className="flex space-x-4">
+                <div key={index} className="flex space-x-4" data-reveal data-reveal-delay={`${index * 100}`}>
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <benefit.icon className="w-6 h-6 text-purple-600" />
                   </div>

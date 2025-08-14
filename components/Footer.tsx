@@ -31,7 +31,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-surface-secondary dark:bg-surface-primary text-text-primary">
+    <footer className="bg-surface-tertiary dark:bg-surface-primary text-text-primary">
       <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
         {/* Main Footer Content */}
         <div className="grid lg:grid-cols-6 gap-12 mb-12">

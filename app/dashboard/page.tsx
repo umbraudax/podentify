@@ -12,7 +12,7 @@ import { Episode } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useCredits } from '@/hooks/useCredits';
-import { isValidMediaFile, isValidFileSize, formatFileSize, getUserDisplayName } from '@/lib/utils';
+import { isValidMediaFile, isValidFileSize, formatFileSize, getUserDisplayName, getPlanBadgeClasses } from '@/lib/utils';
 import { SUPPORTED_AUDIO_FORMATS, MAX_FILE_SIZE } from '@/lib/constants';
 import {
   DropdownMenu,
@@ -373,7 +373,7 @@ export default function Dashboard() {
                     <div className="flex items-center space-x-2">
                       <span className="text-text-primary font-medium">{userDisplayName}</span>
                       {subscriptionPlan && (
-                        <Badge variant="secondary" className="text-xs bg-brand-tertiary text-brand-primary">
+                        <Badge variant="secondary" className={`text-xs ${getPlanBadgeClasses(subscriptionPlan)}`}>
                           {subscriptionPlan}
                         </Badge>
                       )}

@@ -27,7 +27,7 @@ export default function ShowNotesFeature() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}
-          <div className="space-y-8">
+          <div className="space-y-8" data-reveal>
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center">
@@ -46,7 +46,7 @@ export default function ShowNotesFeature() {
 
             <div className="space-y-6">
               {benefits.map((benefit, index) => (
-                <div key={index} className="flex space-x-4">
+                <div key={index} className="flex space-x-4" data-reveal data-reveal-delay={`${index * 100}`}>
                   <div className="w-12 h-12 bg-brand-tertiary rounded-lg flex items-center justify-center flex-shrink-0">
                     <benefit.icon className="w-6 h-6 text-brand-primary" />
                   </div>
@@ -67,7 +67,7 @@ export default function ShowNotesFeature() {
           </div>
 
           {/* Right Column - Visual Demo */}
-          <div className="relative">
+          <div className="relative" data-reveal data-reveal-delay="150">
             <div className="bg-surface-primary rounded-2xl shadow-2xl border border-border overflow-hidden">
               {/* Header */}
               <div className="bg-surface-secondary px-6 py-4 border-b border-border">

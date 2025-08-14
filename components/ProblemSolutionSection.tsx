@@ -43,7 +43,7 @@ export default function ProblemSolutionSection() {
     <section id="features" className="py-24 bg-surface-secondary">
       <div className="max-w-7xl mx-auto px-4">
         {/* Problem Section */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-20" data-reveal>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-primary mb-6">
             Tired of Tedious Transcription & Manual Snipping?
           </h2>
@@ -54,7 +54,7 @@ export default function ProblemSolutionSection() {
 
         <div className="grid md:grid-cols-3 gap-8 mb-24">
           {problems.map((problem, index) => (
-            <div key={index} className="group">
+            <div key={index} className="group" data-reveal data-reveal-delay={`${index * 100}`}>
               <div className="bg-error/5 rounded-2xl p-8 border border-error/10 group-hover:border-error/20 transition-all duration-300 h-full">
                 <div className="w-14 h-14 bg-error/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-error/20 transition-colors">
                   <problem.icon className="w-7 h-7 text-error" />
@@ -67,7 +67,7 @@ export default function ProblemSolutionSection() {
         </div>
 
         {/* Solution Section */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-20" data-reveal>
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
                           <span className="gradient-text">Podentify:</span> Your AI-Powered Content Co-Pilot
           </h2>
@@ -78,13 +78,13 @@ export default function ProblemSolutionSection() {
 
         <div className="grid md:grid-cols-3 gap-8">
           {solutions.map((solution, index) => (
-            <div key={index} className="group">
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-100 group-hover:border-blue-200 transition-all duration-300 h-full group-hover:shadow-xl">
+            <div key={index} className="group" data-reveal data-reveal-delay={`${index * 100}`}>
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 border border-blue-100 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-gray-600 transition-all duration-300 h-full group-hover:shadow-xl">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <solution.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{solution.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{solution.description}</p>
+                <h3 className="text-xl font-bold text-text-primary mb-4">{solution.title}</h3>
+                <p className="text-text-secondary leading-relaxed">{solution.description}</p>
               </div>
             </div>
           ))}

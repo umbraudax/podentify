@@ -221,6 +221,19 @@
 }
 
 @layer utilities {
+  /* Scroll reveal primitives */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 600ms ease, transform 600ms ease;
+    will-change: opacity, transform;
+  }
+
+  [data-reveal].reveal-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }

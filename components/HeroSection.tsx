@@ -31,7 +31,7 @@ export default function HeroSection() {
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8 animate-fade-in" data-reveal>
             <div className="space-y-6">
               <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
                 <span className="gradient-text">Podentify:</span>
@@ -65,7 +65,7 @@ export default function HeroSection() {
           </div>
 
           {/* Right Column - Visual */}
-          <div className="relative">
+          <div className="relative" data-reveal data-reveal-delay="100">
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white">
                 <Sparkles className="w-12 h-12" />
